@@ -5,6 +5,42 @@ Sections: **Added · Changed · Fixed · Security · Data · Notes**. Dates are 
 
 ---
 
+## [0.2.0] — 2026-10-21 · Deploy fix, Gallery, Events, Demo mode
+
+### Fixed
+- **Vercel build failure** (`relation … does not exist` while prerendering `/sitemap.xml`): a fresh Neon database had no
+  tables because migrations never ran. `npm run build` now runs `scripts/predeploy.ts` first (npm `prebuild` hook):
+  on Vercel it applies migrations and inserts baseline data; locally it does nothing. `/sitemap.xml` is rendered per
+  request and falls back to static entries if the database is unreachable. Verified against a brand-new empty database.
+
+### Changed
+- Baseline seed is now **insert-only** so it can run on every deploy: it never overwrites director edits to countries,
+  never re-adds a deleted launch post, and creates the first admin from `ADMIN_EMAIL`/`ADMIN_PASSWORD` only once
+  (password changes made in the console are never reset).
+- Official SPPG social links (LinkedIn, X, Instagram, Facebook, YouTube) in the footer.
+- Working committees show their leads; Research, Data & Political Intelligence shows its Substantive Lead.
+- PeerBridge: "Register as a mentor" now opens the Airtable form; the PeerBridge flyer is shown on /network.
+- Spotlight cards without a photo show a designed monogram panel instead of an empty gradient.
+
+### Added
+- **Gallery** (`/gallery`): photos grouped by country, then by class (or occasion), masonry layout, full-screen
+  lightbox (keyboard + swipe). "In pictures" strip on the homepage (starred photos). Seeded with SPPG's own
+  graduation photos, attributed from what the photos show.
+- **Admin → Gallery**: drag-and-drop bulk upload (up to 100 photos), country/class/occasion tagging, per-photo captions,
+  star for homepage, delete (also deletes the stored file). Photos are compressed **in the browser** before upload —
+  long edge 2400px, WebP, quality stepped down only as needed to stay < 3.5 MB (a 7.5 MB 6000×4000 test photo became
+  513 KB) — which also keeps every upload under Vercel's 4.5 MB request limit.
+- **Event pages** (`/events/[slug]`): flyer, speakers, full programme by segment, moderators, organising committees,
+  printed agenda. First: *Strategy, Reform & Responsible Leadership* (Public Office Readiness Colloquium, 21 Mar 2026).
+- **Demo mode**: Admin dashboard → "Load sample content" adds 4 Spotlight stories, 3 Insights posts and 6 sample
+  profiles. All fictional (names checked against the register), labelled **Sample** on every page, excluded from
+  graduate totals and the sitemap, removed with one click.
+
+### Data
+- Migration `0001_gallery_and_samples`: `gallery_photos` table; `is_sample` on graduates, posts, spotlights.
+
+---
+
 ## [0.1.0] — 2026-10-21 · Initial platform
 
 The first complete build of the SPPG Public Leaders Network website and member platform.
@@ -87,5 +123,4 @@ The first complete build of the SPPG Public Leaders Network website and member p
 - Every public page renders on demand because the header reads the member cookie; move the member badge client-side
   to make marketing pages static/ISR when traffic grows.
 - Admin login throttle is in-memory (per serverless instance); add a DB/Upstash-backed limiter if abuse appears.
-- French (FR) version for Senegal; events managed from admin; committee lead names; SPPG Minis description;
-  mentor application link; official social URLs (`SITE.socials`).
+- French (FR) version for Senegal; events managed from admin; SPPG Minis description.

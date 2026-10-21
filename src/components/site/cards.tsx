@@ -3,8 +3,8 @@ import Image from "next/image";
 import { ArrowUpRight, BadgeCheck, Landmark } from "lucide-react";
 import { Flag } from "@/components/ui/flag";
 import { Avatar, Badge, SampleBadge } from "@/components/ui/primitives";
-import { OFFICE_LABEL, countryAccent } from "@/lib/brand";
-import { formatDate, readingTime } from "@/lib/text";
+import { OFFICE_LABEL, cn, countryAccent } from "@/lib/brand";
+import { formatDate, initials, readingTime } from "@/lib/text";
 import type { PublicGraduate, PostListItem, SpotlightItem } from "@/lib/queries";
 
 /* ── Graduate ── */
@@ -52,7 +52,24 @@ export function SpotlightCard({ s, large = false }: { s: SpotlightItem; large?: 
         {img ? (
           <Image src={img} alt="" fill sizes="(min-width: 1024px) 40vw, 100vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
         ) : (
-          <div className="tile-gradient absolute inset-0" />
+          // No photo yet: a designed monogram panel (frame motif + initials) instead of an empty block.
+          <div className="tile-gradient absolute inset-0 overflow-hidden" aria-hidden>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.25),transparent_55%)]" />
+            <span
+              className={cn(
+                "absolute -right-4 top-1/2 -translate-y-[62%] select-none font-black leading-none tracking-tighter text-white/15 transition-transform duration-700 group-hover:-translate-x-2",
+                large ? "text-[16rem]" : "text-[10rem]",
+              )}
+            >
+              {initials(s.graduateName)}
+            </span>
+            <span className="absolute left-5 top-14 flex h-1.5 w-20 gap-0.5">
+              <i className="flex-1 rounded-full bg-white/80" />
+              <i className="flex-1 rounded-full bg-white/60" />
+              <i className="flex-1 rounded-full bg-white/40" />
+              <i className="flex-1 rounded-full bg-white/25" />
+            </span>
+          </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent" />
         <span className="absolute left-4 top-4 flex items-center gap-1.5">

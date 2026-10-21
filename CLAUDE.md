@@ -41,7 +41,7 @@ countries and cohorts are rows in the database, never code changes.
 npm run dev:local           # starts the local DB (db:dev) + Next on http://localhost:3000
 npm run db:dev              # local Postgres (PGlite) only — needed by dev and all db:* scripts
 npm run dev                 # Next only (DB must already be running, or DATABASE_URL set)
-npm run build && npm start  # production build check — run before every push
+npm run build && npm start  # production build check — run before every push (prebuild runs predeploy; no-op locally)
 npm run typecheck           # tsc --noEmit
 npm run lint
 
@@ -66,7 +66,7 @@ src/
   app/
     (site)/            public website (shared header/footer layout)
       page.tsx         home
-      about/ join/ network/ impact/ graduates/ spotlight/ insights/ events/ write/ member/
+      about/ join/ network/ impact/ graduates/ spotlight/ insights/ gallery/ events/ write/ member/
     admin/             director console (protected by middleware + requireAdmin())
     api/upload/        image upload endpoint (admin or verified graduate)
   components/          UI building blocks (site/, admin/, ui/)
@@ -74,7 +74,7 @@ src/
   db/                  schema.ts (source of truth), connect.ts, index.ts
   lib/                 auth, queries, actions helpers, email, storage, text, csv, import
   middleware.ts        guards /admin/* and /member/*
-scripts/               dev-db, dev-local, migrate, seed, import-graduates, create-admin, build-africa-dots
+scripts/               predeploy (runs on every Vercel build), dev-db, dev-local, migrate, seed, import-graduates, create-admin, build-africa-dots
 drizzle/               generated SQL migrations (commit these)
 data/private/          graduate registry CSV — GITIGNORED, NEVER COMMIT
 ```
@@ -103,6 +103,11 @@ data/private/          graduate registry CSV — GITIGNORED, NEVER COMMIT
 - **neon-http has no interactive transactions.** Write idempotent, ordered statements instead.
 - Countries/cohorts live in the DB. Never `if (country === "NG")` in UI code — read from `countries`/`cohorts`.
 - Graduate totals are **computed** from the `graduates` table. Public-office numbers are **director-edited** in `stats`.
+- **Every Vercel deploy runs `scripts/predeploy.ts`** (migrations + `seedBaseline`). Therefore the baseline seed must stay
+  **insert-only**: never update or re-create rows directors may have edited or deleted.
+- **Sample content** (`src/lib/samples.ts`) is fictional demo data: always `isSample = true`, always shown with `<SampleBadge />`,
+  never counted in totals, never in the sitemap. Sample personas must not share a full name with anyone on the register.
+- Uploads: compress in the browser (`compressImage` in `components/ui/image-upload.tsx`) — Vercel rejects request bodies > 4.5 MB.
 
 ### Content & editorial
 - All prose copy lives in `src/content/site.ts` (or the DB). Components render; they don't author.
@@ -148,5 +153,5 @@ Keep this list current; move resolved items to CHANGELOG.
 - Registry vs. quoted totals: registry has Nigeria 1,261 / Senegal 46 / Kenya 55 = 1,362 (quoted: 1,262 / 45 / 55). Site shows live registry counts.
 - One registry row (James Chamberlain Omailey, Class of 2025) has no email → can't self-verify until a director adds one.
 - French (FR) version for Senegal: planned — copy lives in `site.ts` to make i18n straightforward.
-- Events are static in `site.ts`; move to DB with an admin screen when cadence justifies it.
-- Committee lead names, SPPG Minis description, mentor application form link, official social media URLs (`SITE.socials`): awaiting input from SPLN.
+- Events are static in `site.ts` (typed `SplnEvent`, with agenda/speakers → `/events/[slug]`); move to DB with an admin screen when cadence justifies it.
+- SPPG Minis one-line description: awaiting input from SPLN.

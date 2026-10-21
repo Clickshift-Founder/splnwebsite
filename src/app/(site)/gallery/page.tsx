@@ -24,7 +24,7 @@ function toAlbums(photos: GalleryItem[]): Album[] {
       map.set(key, {
         key,
         title: p.cohortName ?? p.occasion,
-        subtitle: p.cohortName ? p.occasion : "Convenings & moments",
+        subtitle: p.cohortName ? p.occasion : p.occasion === "Graduation" ? "Across classes" : "Convenings & moments",
         sort: p.cohortId ? -(p.cohortYear ?? 0) * 100 - (p.cohortSort ?? 0) : 1,
         photos: [],
       });

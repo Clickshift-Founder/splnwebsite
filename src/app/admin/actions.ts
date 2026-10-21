@@ -441,6 +441,7 @@ export async function loadSampleContent() {
   const res = await loadSamples(db, a.id);
   await audit(`admin:${a.id}`, "samples.load", undefined, res);
   revalidatePublic();
+  revalidatePath("/admin");
   redirect("/admin?samples=loaded");
 }
 
@@ -449,6 +450,7 @@ export async function removeSampleContent() {
   await removeSamples(db);
   await audit(`admin:${a.id}`, "samples.remove");
   revalidatePublic();
+  revalidatePath("/admin");
   redirect("/admin?samples=removed");
 }
 

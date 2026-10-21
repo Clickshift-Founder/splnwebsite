@@ -35,16 +35,20 @@ Without `RESEND_API_KEY`, graduate sign-in codes print in the terminal.
 1. Import this repo into Vercel.
 2. **Storage → Create → Neon (Postgres)** and connect it to the project. This sets `DATABASE_URL`.
 3. **Storage → Create → Blob** and connect it. This sets `BLOB_READ_WRITE_TOKEN` for photo uploads.
-4. **Settings → Environment Variables:** add `AUTH_SECRET` (random, 48+ chars), `RESEND_API_KEY`,
-   `EMAIL_FROM` (a sender on a domain verified in Resend), and `NEXT_PUBLIC_SITE_URL` (e.g. `https://pln.thesppg.org`).
-5. From your machine, with the Neon `DATABASE_URL` in `.env.local`:
-   ```bash
-   npm run db:migrate
-   npm run db:seed
-   npm run db:import-graduates -- data/private/graduates.csv
-   npm run admin:create -- "Director Name" director@thesppg.org "a-strong-password" super_admin
-   ```
-6. Deploy. Then sign in at `/admin` and add the other directors under **Admins & security**.
+4. **Settings → Environment Variables** (tick Production, Preview and Development for each):
+
+   | Variable | What it is | How to get it |
+   |---|---|---|
+   | `AUTH_SECRET` | Signs login cookies | Any long random string. Run `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"`, or use a password generator (64+ characters). Never share it. |
+   | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | First director login | The email and password (10+ characters) you'll sign in to `/admin` with. Created on the first deploy. |
+   | `NEXT_PUBLIC_SITE_URL` | The site's public address | e.g. `https://splnwebsite.vercel.app` now, and `https://pln.thesppg.org` once the domain is connected. |
+   | `RESEND_API_KEY` | Sends graduates their sign-in codes | resend.com → sign up → **API Keys → Create** → copy the `re_…` key. |
+   | `EMAIL_FROM` | Who the code emails come from | Resend → **Domains → Add domain** (e.g. `thesppg.org`) → add the DNS records it shows → once verified use `SPLN <no-reply@thesppg.org>`. Before that, Resend can only send to your own email. |
+
+5. Redeploy. The build migrates the database, adds countries, classes, numbers, launch posts and gallery photos, and
+   creates the first admin. Nothing to run by hand.
+6. Sign in at `/admin` → **Graduates → Import or update from a registry CSV** → upload the graduate list.
+7. Add the other directors under **Admins & security**. For a demo, use **Dashboard → Load sample content**.
 
 ### Why Neon (not Supabase)?
 
