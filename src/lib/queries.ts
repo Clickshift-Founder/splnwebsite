@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, count, desc, eq, ilike, ne, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { cohorts, countries, graduates, posts, spotlights, stats } from "@/db/schema";
+import { cohorts, countries, galleryPhotos, graduates, posts, spotlights, stats } from "@/db/schema";
 
 /**
  * The ONLY graduate columns allowed on public pages. Email, phone, matric number and
@@ -21,6 +21,7 @@ export const publicGraduateColumns = {
   officeStatus: graduates.officeStatus,
   officeTitle: graduates.officeTitle,
   profileClaimedAt: graduates.profileClaimedAt,
+  isSample: graduates.isSample,
   cohortId: cohorts.id,
   cohortName: cohorts.name,
   cohortSlug: cohorts.slug,
@@ -44,11 +45,12 @@ export async function getCohorts() {
   return db.select().from(cohorts).orderBy(asc(cohorts.sortOrder));
 }
 
-/** Network-wide numbers, computed live from the registry (hidden graduates still count). */
+/** Network-wide numbers, computed live from the registry (hidden graduates still count; sample personas never do). */
 export async function getNetworkTotals() {
   const byCohort = await db
     .select({ cohortId: graduates.cohortId, n: count() })
     .from(graduates)
+    .where(eq(graduates.isSample, false))
     .groupBy(graduates.cohortId);
   const [allCountries, allCohorts] = await Promise.all([getCountries(), getCohorts()]);
   const cohortCount = new Map(byCohort.map((r) => [r.cohortId, Number(r.n)]));
@@ -184,6 +186,7 @@ const postColumns = {
   topic: posts.topic,
   sources: posts.sources,
   featured: posts.featured,
+  isSample: posts.isSample,
   publishedAt: posts.publishedAt,
   authorName: posts.authorName,
   authorSlug: graduates.slug,
@@ -245,6 +248,7 @@ const spotlightColumns = {
   gallery: spotlights.gallery,
   evidenceLinks: spotlights.evidenceLinks,
   featured: spotlights.featured,
+  isSample: spotlights.isSample,
   publishedAt: spotlights.publishedAt,
   graduateId: graduates.id,
   graduateSlug: graduates.slug,
@@ -298,3 +302,31 @@ export async function getSpotlightCategoriesInUse() {
   return rows.map((r) => ({ category: r.category, n: Number(r.n) }));
 }
 
+
+/* ── Gallery ────────────────────────────────────────────────────────────── */
+
+export type GalleryItem = Awaited<ReturnType<typeof listGallery>>[number];
+
+export async function listGallery({ country, featuredOnly, limit = 500 }: { country?: string; featuredOnly?: boolean; limit?: number } = {}) {
+  return db
+    .select({
+      id: galleryPhotos.id,
+      url: galleryPhotos.url,
+      width: galleryPhotos.width,
+      height: galleryPhotos.height,
+      caption: galleryPhotos.caption,
+      occasion: galleryPhotos.occasion,
+      featured: galleryPhotos.featured,
+      isSample: galleryPhotos.isSample,
+      countryCode: galleryPhotos.countryCode,
+      cohortId: galleryPhotos.cohortId,
+      cohortName: cohorts.name,
+      cohortYear: cohorts.year,
+      cohortSort: cohorts.sortOrder,
+    })
+    .from(galleryPhotos)
+    .leftJoin(cohorts, eq(galleryPhotos.cohortId, cohorts.id))
+    .where(and(country ? eq(galleryPhotos.countryCode, country.toUpperCase()) : undefined, featuredOnly ? eq(galleryPhotos.featured, true) : undefined))
+    .orderBy(desc(galleryPhotos.featured), asc(galleryPhotos.sortOrder), desc(galleryPhotos.createdAt))
+    .limit(limit);
+}

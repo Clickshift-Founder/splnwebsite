@@ -6,16 +6,20 @@ import { AdminHeader, Panel, StatCard } from "@/components/admin/ui";
 import { Badge, ButtonLink } from "@/components/ui/primitives";
 import { requireAdmin } from "@/lib/auth";
 import { formatDate } from "@/lib/text";
+import { sampleCounts } from "@/lib/samples";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { loadSampleContent, removeSampleContent } from "../actions";
 
 const claimPct = (n: number, of: number) => {
   const p = (n / Math.max(1, of)) * 100;
   return n > 0 && p < 1 ? "<1%" : `${Math.round(p)}%`;
 };
 
-export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
+export default async function AdminDashboard({ searchParams }: { searchParams: Promise<{ denied?: string; samples?: string }> }) {
   const admin = await requireAdmin();
-  const { denied } = await searchParams;
-  const [pendingPosts, newNoms, totals, liveSpotlights, recent, pendingList] = await Promise.all([
+  const { denied, samples: samplesMsg } = await searchParams;
+  const [samples, pendingPosts, newNoms, totals, liveSpotlights, recent, pendingList] = await Promise.all([
+    sampleCounts(db),
     db.$count(posts, eq(posts.status, "pending")),
     db.$count(nominations, eq(nominations.status, "new")),
     db
@@ -26,7 +30,8 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
         withPhoto: sql<number>`count(*) filter (where ${graduates.photoUrl} is not null)`,
         noEmail: sql<number>`count(*) filter (where ${graduates.email} is null)`,
       })
-      .from(graduates),
+      .from(graduates)
+      .where(eq(graduates.isSample, false)),
     db.$count(spotlights, eq(spotlights.isPublished, true)),
     db.select().from(auditLog).orderBy(desc(auditLog.createdAt)).limit(12),
     db
@@ -56,6 +61,38 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
         }
       />
       {denied && <p className="mb-6 rounded-[8px] bg-red-tint px-4 py-3 text-sm font-bold text-red">That area needs a super-admin account.</p>}
+      {samplesMsg && (
+        <p className="mb-6 rounded-[8px] bg-green-tint px-4 py-3 text-sm font-bold text-green-deep">
+          {samplesMsg === "loaded" ? "Sample content loaded — look around the public site." : "Sample content removed. Only real content remains."}
+        </p>
+      )}
+
+      <section className={samples.total ? "mb-6 rounded-[12px] border-2 border-amber bg-amber-tint p-5" : "mb-6 rounded-[12px] border border-dashed border-line bg-white p-5"}>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-extrabold">{samples.total ? "Demo mode: sample content is live on the site" : "Presenting the platform?"}</p>
+            <p className="mt-1 max-w-2xl text-sm text-slate">
+              {samples.total
+                ? `${samples.spotlights} Spotlight stories, ${samples.posts} Insights posts and ${samples.graduates} sample profiles are showing, each marked “Sample”. They never count towards graduate totals. Remove them before launch, or once real stories are in.`
+                : "Load fictional, clearly-labelled sample Spotlight stories, Insights articles and graduate profiles so you can demo every page. Remove them in one click."}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <form action={loadSampleContent}>
+              <ConfirmButton message={samples.total ? "Reload sample content (resets any edits to samples)?" : "Add sample content to the public site?"} className="h-10 rounded-[4px] bg-ink px-4 text-sm font-bold text-white hover:bg-green-deep">
+                {samples.total ? "Reload samples" : "Load sample content"}
+              </ConfirmButton>
+            </form>
+            {samples.total > 0 && (
+              <form action={removeSampleContent}>
+                <ConfirmButton message="Remove ALL sample content from the site?" className="h-10 rounded-[4px] border border-ink px-4 text-sm font-bold hover:bg-white">
+                  Remove all samples
+                </ConfirmButton>
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Submissions awaiting review" value={pendingPosts} href="/admin/posts?status=pending" tone={pendingPosts ? "alert" : "default"} />

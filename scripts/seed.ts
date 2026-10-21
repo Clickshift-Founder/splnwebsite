@@ -1,9 +1,13 @@
-// Idempotent baseline data: countries, cohorts, headline stats, first admin, launch posts.
-// Safe to re-run — existing rows are updated, never duplicated.
+// Baseline data: countries, cohorts, headline stats, first admin, launch posts.
+// Runs on EVERY Vercel deploy (scripts/predeploy.ts), so it only ever INSERTS what is missing —
+// it never overwrites anything directors have edited in the console.
 import "./_env";
 import { createDb } from "../src/db/connect";
-import { countries, cohorts, stats, posts } from "../src/db/schema";
-import { upsertAdmin } from "./create-admin";
+import { countries, cohorts, stats, posts, galleryPhotos } from "../src/db/schema";
+import bcrypt from "bcryptjs";
+import { admins } from "../src/db/schema";
+import { normaliseEmail } from "../src/lib/text";
+import type { DB } from "../src/db/connect";
 
 export const COUNTRIES = [
   { code: "NG", name: "Nigeria", flag: "🇳🇬", status: "active", admissionsOpen: true, sortOrder: 1,
@@ -95,14 +99,23 @@ Find yourself in the directory, claim your profile, and tell us what you're buil
   },
 ];
 
-async function main() {
-  const db = createDb();
+/** Real SPPG photos (from thesppg.org), attributed from what the photos show. */
+const GALLERY = [
+  { url: "/images/grad-stage.jpg", width: 1500, height: 999, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "The Class of 2024 with SPPG leadership at the Shehu Musa Yar'Adua Centre, Abuja", featured: true },
+  { url: "/images/grad-audience.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "Graduands of the Class of 2024 at the ceremony", featured: false },
+  { url: "/images/grad-cert.jpg", width: 1400, height: 933, countryCode: "NG", cohort: null, occasion: "Graduation", caption: "A graduate receives their certificate at a hybrid ceremony", featured: false },
+  { url: "/images/afcon-group.jpg", width: 1800, height: 809, countryCode: "NG", cohort: null, occasion: "Africa Conference", caption: "SPPG leadership and partners at the Africa Conference", featured: false },
+  { url: "/images/sn-class-photo.jpg", width: 1080, height: 732, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "SPPG Senegal's pioneer class at the Remise de Diplômes, Dakar", featured: true },
+  { url: "/images/sn-class-wide.jpg", width: 1080, height: 551, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "Senegal's pioneer graduates with faculty and guests", featured: false },
+  { url: "/images/sn-certificate.jpg", width: 1115, height: 892, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "Certificate presentation, Dakar", featured: false },
+  { url: "/images/ke-flags-crowd.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "Kenya's pioneer class celebrates at graduation", featured: true },
+  { url: "/images/ke-embrace.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "A Kenyan graduate is congratulated on stage", featured: false },
+];
+
+export async function seedBaseline(db: DB) {
 
   for (const c of COUNTRIES) {
-    await db.insert(countries).values({ ...c }).onConflictDoUpdate({
-      target: countries.code,
-      set: { name: c.name, flag: c.flag, sortOrder: c.sortOrder },
-    });
+    await db.insert(countries).values({ ...c }).onConflictDoNothing({ target: countries.code });
   }
   for (const c of COHORTS) {
     await db.insert(cohorts).values(c).onConflictDoNothing({ target: cohorts.slug });
@@ -110,21 +123,41 @@ async function main() {
   for (const s of STATS) {
     await db.insert(stats).values(s).onConflictDoNothing({ target: stats.key });
   }
-  for (const p of LAUNCH_POSTS) {
-    await db
-      .insert(posts)
-      .values({ ...p, status: "published", authorName: "SPLN Secretariat", featured: p.slug.startsWith("spln-goes") })
-      .onConflictDoNothing({ target: posts.slug });
+  // Launch posts only into an empty Insights table — a post a director deleted must stay deleted.
+  if ((await db.$count(posts)) === 0) {
+    for (const p of LAUNCH_POSTS) {
+      await db.insert(posts).values({ ...p, status: "published", authorName: "SPLN Secretariat", featured: p.slug.startsWith("spln-goes") });
+    }
   }
 
-  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-    await upsertAdmin("SPLN Director", process.env.ADMIN_EMAIL, process.env.ADMIN_PASSWORD, "super_admin");
-  } else {
-    console.warn("! ADMIN_EMAIL/ADMIN_PASSWORD not set — no admin created. Run `npm run admin:create` later.");
+  if ((await db.$count(galleryPhotos)) === 0) {
+    const all = await db.select({ id: cohorts.id, slug: cohorts.slug }).from(cohorts);
+    for (const [i, g] of GALLERY.entries()) {
+      const { cohort, ...rest } = g;
+      await db.insert(galleryPhotos).values({ ...rest, cohortId: all.find((c) => c.slug === cohort)?.id ?? null, sortOrder: i });
+    }
   }
 
-  const n = await db.$count(cohorts);
-  console.log(`✓ Seeded ${COUNTRIES.length} countries, ${n} cohorts, ${STATS.length} stats, ${LAUNCH_POSTS.length} posts`);
+  // First director from env — created once. Later password changes happen in the console and are never reset here.
+  const email = process.env.ADMIN_EMAIL && normaliseEmail(process.env.ADMIN_EMAIL);
+  const password = process.env.ADMIN_PASSWORD;
+  if (email && password) {
+    if (password.length < 10) throw new Error("ADMIN_PASSWORD must be at least 10 characters.");
+    const created = await db
+      .insert(admins)
+      .values({ name: process.env.ADMIN_NAME ?? "SPLN Director", email, passwordHash: await bcrypt.hash(password, 12), role: "super_admin" })
+      .onConflictDoNothing({ target: admins.email })
+      .returning({ id: admins.id });
+    if (created.length) console.log(`✓ Admin created: ${email}`);
+  } else if ((await db.$count(admins)) === 0) {
+    console.warn("! No admin exists and ADMIN_EMAIL/ADMIN_PASSWORD are not set — set them and redeploy, or run `npm run admin:create`.");
+  }
+
+  console.log(`✓ Baseline ready: ${await db.$count(countries)} countries, ${await db.$count(cohorts)} classes, ${await db.$count(stats)} figures, ${await db.$count(posts)} posts`);
+}
+
+async function main() {
+  await seedBaseline(createDb());
   process.exit(0);
 }
 

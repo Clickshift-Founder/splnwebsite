@@ -61,6 +61,7 @@ export const graduates = pgTable(
     officeStatus: officeStatus("office_status").notNull().default("none"),
     officeTitle: text("office_title"),
     isHidden: boolean("is_hidden").notNull().default(false),
+    isSample: boolean("is_sample").notNull().default(false), // demo persona — removable in one click, excluded from totals
     profileClaimedAt: timestamp("profile_claimed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -137,6 +138,7 @@ export const posts = pgTable(
     reviewedById: integer("reviewed_by_id").references(() => admins.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     featured: boolean("featured").notNull().default(false),
+    isSample: boolean("is_sample").notNull().default(false),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -164,12 +166,35 @@ export const spotlights = pgTable(
     evidenceLinks: jsonb("evidence_links").$type<EvidenceLink[]>().default([]),
     isPublished: boolean("is_published").notNull().default(false),
     featured: boolean("featured").notNull().default(false),
+    isSample: boolean("is_sample").notNull().default(false),
     createdById: integer("created_by_id").references(() => admins.id, { onDelete: "set null" }),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("spotlights_pub_idx").on(t.isPublished, t.publishedAt)],
+);
+
+/* ── Gallery: photos by country, class and occasion ─────────────────────────── */
+
+export const galleryPhotos = pgTable(
+  "gallery_photos",
+  {
+    id: serial("id").primaryKey(),
+    url: text("url").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    caption: text("caption"),
+    countryCode: text("country_code").notNull().references(() => countries.code),
+    cohortId: integer("cohort_id").references(() => cohorts.id, { onDelete: "set null" }), // null = not tied to one class
+    occasion: text("occasion").notNull().default("Graduation"), // Graduation · Induction · Convening · Workshop …
+    featured: boolean("featured").notNull().default(false), // shown on the homepage strip + used as album cover
+    isSample: boolean("is_sample").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdById: integer("created_by_id").references(() => admins.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("gallery_album_idx").on(t.countryCode, t.cohortId)],
 );
 
 /** Peer nominations / news tips for the Spotlight — reviewed in admin. */
@@ -202,3 +227,4 @@ export type Post = typeof posts.$inferSelect;
 export type Spotlight = typeof spotlights.$inferSelect;
 export type Stat = typeof stats.$inferSelect;
 export type Admin = typeof admins.$inferSelect;
+export type GalleryPhoto = typeof galleryPhotos.$inferSelect;

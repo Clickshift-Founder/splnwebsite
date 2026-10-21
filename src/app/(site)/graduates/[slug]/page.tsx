@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeCheck, Landmark, MapPin, PencilLine, ShieldCheck, ArrowLeft } from "lucide-react";
 import { GraduateCard, PostCard, SpotlightCard } from "@/components/site/cards";
-import { Avatar, Badge, FrameBar, buttonClass } from "@/components/ui/primitives";
+import { Avatar, Badge, FrameBar, SampleBadge, buttonClass } from "@/components/ui/primitives";
 import { Flag } from "@/components/ui/flag";
 import { SocialLinks } from "@/components/ui/social-icons";
 import { OFFICE_LABEL, countryAccent } from "@/lib/brand";
@@ -52,6 +52,7 @@ export default async function GraduateProfilePage({ params }: { params: Params }
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
+                {g.isSample && <SampleBadge />}
                 <Badge accent={countryAccent(g.countryCode)}>
                   <Flag code={g.countryCode} emoji={g.countryFlag} /> {g.countryName} · {g.cohortName}
                 </Badge>

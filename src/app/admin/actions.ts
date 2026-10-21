@@ -6,10 +6,12 @@ import { redirect } from "next/navigation";
 import { and, asc, eq, ilike, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { admins, cohorts, countries, graduates, nominations, posts, spotlights, stats } from "@/db/schema";
+import { admins, cohorts, countries, galleryPhotos, graduates, nominations, posts, spotlights, stats } from "@/db/schema";
 import { endAdminSession, requireAdmin, startAdminSession } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { importGraduatesCsv } from "@/lib/graduate-import";
+import { loadSamples, removeSamples } from "@/lib/samples";
+import { deleteStored } from "@/lib/storage";
 import { cleanName, normaliseEmail, slugify } from "@/lib/text";
 import { adminPostSchema, fieldErrors, formToObject, profileSchema, spotlightSchema } from "@/lib/validation";
 import type { ActionResult } from "@/components/ui/form";
@@ -17,7 +19,7 @@ import type { ActionResult } from "@/components/ui/form";
 const fail = (error: string, fe?: Record<string, string>): ActionResult => ({ ok: false, error, fieldErrors: fe });
 
 function revalidatePublic() {
-  for (const p of ["/", "/graduates", "/impact", "/spotlight", "/insights", "/join"]) revalidatePath(p);
+  for (const p of ["/", "/graduates", "/impact", "/spotlight", "/insights", "/join", "/gallery"]) revalidatePath(p);
 }
 
 /* ── Auth ─────────────────────────────────────────────────────────────── */
@@ -431,3 +433,95 @@ export async function changeOwnPassword(_prev: ActionResult, form: FormData): Pr
   return { ok: true, message: "Password changed." };
 }
 
+
+/* ── Sample content (demo mode) ───────────────────────────────────────── */
+
+export async function loadSampleContent() {
+  const a = await requireAdmin();
+  const res = await loadSamples(db, a.id);
+  await audit(`admin:${a.id}`, "samples.load", undefined, res);
+  revalidatePublic();
+  redirect("/admin?samples=loaded");
+}
+
+export async function removeSampleContent() {
+  const a = await requireAdmin();
+  await removeSamples(db);
+  await audit(`admin:${a.id}`, "samples.remove");
+  revalidatePublic();
+  redirect("/admin?samples=removed");
+}
+
+/* ── Gallery ──────────────────────────────────────────────────────────── */
+
+const galleryUploadSchema = z.object({
+  countryCode: z.string().trim().toUpperCase().length(2, "Choose a country."),
+  cohortId: z.coerce.number().int().optional().transform((v) => v || null),
+  occasion: z.string().trim().min(2, "Name the occasion, e.g. Graduation.").max(60),
+  photos: z
+    .string()
+    .transform((v, ctx) => {
+      try {
+        return JSON.parse(v) as { url: string; width: number; height: number; caption?: string }[];
+      } catch {
+        ctx.addIssue({ code: "custom", message: "Upload data is invalid." });
+        return z.NEVER;
+      }
+    })
+    .refine((arr) => arr.length > 0 && arr.length <= 100, "Upload between 1 and 100 photos.")
+    .refine((arr) => arr.every((p) => p.url.startsWith("/uploads/") || /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(p.url)), "Photos must be uploaded with the uploader."),
+});
+
+export async function addGalleryPhotos(_prev: ActionResult, form: FormData): Promise<ActionResult> {
+  const a = await requireAdmin();
+  const parsed = galleryUploadSchema.safeParse(formToObject(form));
+  if (!parsed.success) return fail("Please fix the highlighted fields.", fieldErrors(parsed.error));
+  const { countryCode, cohortId, occasion, photos } = parsed.data;
+  if (cohortId) {
+    const [c] = await db.select({ countryCode: cohorts.countryCode }).from(cohorts).where(eq(cohorts.id, cohortId));
+    if (c?.countryCode !== countryCode) return fail("That class doesn't belong to the selected country.");
+  }
+  await db.insert(galleryPhotos).values(
+    photos.map((p, i) => ({
+      url: p.url,
+      width: Math.round(p.width) || null,
+      height: Math.round(p.height) || null,
+      caption: p.caption?.trim().slice(0, 200) || null,
+      countryCode,
+      cohortId,
+      occasion,
+      sortOrder: i,
+      createdById: a.id,
+    })),
+  );
+  await audit(`admin:${a.id}`, "gallery.add", `${countryCode}/${cohortId ?? "-"}`, { count: photos.length });
+  revalidatePath("/gallery");
+  revalidatePath("/");
+  revalidatePath("/admin/gallery");
+  return { ok: true, message: `${photos.length} photo${photos.length === 1 ? "" : "s"} added to the gallery.` };
+}
+
+export async function updateGalleryPhoto(form: FormData) {
+  await requireAdmin();
+  const id = Number(form.get("id"));
+  const intent = String(form.get("intent"));
+  if (intent === "feature") {
+    await db.update(galleryPhotos).set({ featured: form.get("featured") === "1" }).where(eq(galleryPhotos.id, id));
+  } else if (intent === "caption") {
+    await db.update(galleryPhotos).set({ caption: String(form.get("caption") ?? "").trim().slice(0, 200) || null }).where(eq(galleryPhotos.id, id));
+  }
+  revalidatePath("/gallery");
+  revalidatePath("/");
+  revalidatePath("/admin/gallery");
+}
+
+export async function deleteGalleryPhoto(form: FormData) {
+  const a = await requireAdmin();
+  const id = Number(form.get("id"));
+  const [p] = await db.delete(galleryPhotos).where(eq(galleryPhotos.id, id)).returning({ url: galleryPhotos.url });
+  if (p && !p.url.startsWith("/images/")) await deleteStored(p.url);
+  await audit(`admin:${a.id}`, "gallery.delete", `gallery:${id}`);
+  revalidatePath("/gallery");
+  revalidatePath("/");
+  revalidatePath("/admin/gallery");
+}

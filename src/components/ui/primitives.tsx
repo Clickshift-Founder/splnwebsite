@@ -179,6 +179,18 @@ export function Avatar({
   );
 }
 
+/* ── Sample marker: shown on every piece of demo content (see src/lib/samples.ts) ── */
+export function SampleBadge({ className }: { className?: string }) {
+  return (
+    <span
+      title="Sample content for demonstration — will be replaced with real stories"
+      className={cn("inline-flex items-center rounded-full bg-amber px-2 py-0.5 text-[0.68rem] font-extrabold uppercase tracking-wider text-ink", className)}
+    >
+      Sample
+    </span>
+  );
+}
+
 /* ── Empty state ── */
 export function EmptyState({ title, body, action }: { title: string; body?: string; action?: React.ReactNode }) {
   return (

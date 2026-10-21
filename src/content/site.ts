@@ -13,8 +13,15 @@ export const SITE = {
   contactEmail: "pln@nigeria.thesppg.org",
   tagline: "A community of public leaders. Africa's future in action.",
   launchVideo: "https://drive.google.com/file/d/1czusc9HbXYkJfLP3vZi4PDXl_89sr5z7/view",
-  // Official SPPG/SPLN social URLs — fill these in (left empty until verified; empty = icon hidden).
-  socials: { x: "", linkedin: "", facebook: "" },
+  // Official SPPG social accounts (empty string = icon hidden).
+  socials: {
+    linkedin: "https://www.linkedin.com/company/the-school-of-politics-policy-and-governance/",
+    x: "https://x.com/TheSPPG",
+    instagram: "https://www.instagram.com/thesppg",
+    facebook: "https://www.facebook.com/share/1C3qhm5969/",
+    youtube: "https://youtube.com/@sppgnigeria",
+  },
+  mentorApplyUrl: "https://airtable.com/appYLxafaqe5BUo0Q/shrqp7PQJQS7544TJ",
 };
 
 export const NAV = [
@@ -22,6 +29,7 @@ export const NAV = [
   { href: "/graduates", label: "Graduates" },
   { href: "/spotlight", label: "Spotlight" },
   { href: "/insights", label: "Insights" },
+  { href: "/gallery", label: "Gallery" },
   { href: "/network", label: "The Network" },
   { href: "/impact", label: "Impact" },
 ];
@@ -142,11 +150,32 @@ export const LEADERSHIP = [
 ];
 
 export const COMMITTEES = [
-  { name: "Innovating African Politics & Governance", body: "Rethinking governance models, institutional practice and reform pathways for Africa." },
-  { name: "Political Leadership Development & Mentorship", body: "Capacity and mentorship pipelines for graduates aspiring to public office or leadership." },
-  { name: "Advocacy, Civic Engagement & Public Voice", body: "Civic participation, citizen engagement and the public narrative on democracy and governance." },
-  { name: "Research, Data & Political Intelligence", body: "Evidence, insight and political intelligence to guide decision-making and advocacy." },
-  { name: "Communications, Media & Narrative Strategy", body: "The network's voice — storytelling, brand and public visibility." },
+  {
+    name: "Innovating African Politics & Governance",
+    body: "Rethinking governance models, institutional practices and reform pathways for Africa.",
+    leads: ["Abuh Jonathan", "Papa Momar Ndiaye", "Oluwasayo Esther Lasisi"],
+  },
+  {
+    name: "Political Leadership Development & Mentorship",
+    body: "Building capacity and mentorship pipelines for graduates aspiring to public office or leadership.",
+    leads: ["Samson Bisiriyu", "Adesola Yaqub"],
+  },
+  {
+    name: "Advocacy, Civic Engagement & Public Voice",
+    body: "Driving civic participation, citizen engagement, and shaping narratives on democracy and governance.",
+    leads: ["Abraham Emiantor", "Alade Oluwagbenga"],
+  },
+  {
+    name: "Research, Data & Political Intelligence",
+    body: "Producing evidence, insights and political intelligence to guide decision-making and advocacy.",
+    leads: ["David Ikpam"],
+    leadLabel: "Substantive Lead",
+  },
+  {
+    name: "Communications, Media & Narrative Strategy",
+    body: "Strengthening the voice of the community through storytelling, branding and public visibility.",
+    leads: ["Ehi Ohiani", "Abiola Olagunju", "Samuel Effiong"],
+  },
 ];
 
 export const COMMITTEE_RULES = [
@@ -183,6 +212,7 @@ export const PEERBRIDGE = {
     "Midpoint survey (month 2)",
     "Final review (month 5)",
   ],
+  mentorImage: "/images/peerbridge-mentor.jpg",
   mentorAsk:
     "Graduates with 5+ years of leadership experience — public servants, civic leaders, policy practitioners and reformers. Mentors commit to a structured 6-month cycle: a virtual orientation, monthly check-ins, at least one learning circle, and short midpoint and final reflections.",
 };
@@ -208,9 +238,36 @@ export const PLEDGE = {
   close: ["For our people.", "For our nations.", "For Africa.", "For generations to come."],
 };
 
-/** `date` is only a sort key / past-vs-upcoming marker; `when` is what we display (don't invent exact dates). */
-export const EVENTS = [
+export type EventSpeaker = { name: string; role: string };
+export type AgendaItem = { title: string; who?: string };
+export type AgendaSegment = { title: string; items: AgendaItem[] };
+export type SplnEvent = {
+  slug: string;
+  /** Sort key / past-vs-upcoming marker only. Display `when` — never invent exact dates. */
+  date: string;
+  when: string;
+  time?: string;
+  series?: string;
+  title: string;
+  kind: string;
+  place: string;
+  body: string;
+  image?: string;
+  agendaImage?: string;
+  link?: string;
+  linkLabel?: string;
+  speakers?: EventSpeaker[];
+  moderators?: string[];
+  poweredBy?: string[];
+  agenda?: AgendaSegment[];
+};
+
+/** An event gets its own page when it has more to show than its card. */
+export const eventHasDetail = (e: SplnEvent) => Boolean(e.agenda?.length || e.speakers?.length);
+
+export const EVENTS: SplnEvent[] = [
   {
+    slug: "global-spln-launch-2025",
     date: "2025-08-21",
     when: "21 Aug 2025",
     title: "Global SPLN Launch",
@@ -221,6 +278,7 @@ export const EVENTS = [
     linkLabel: "Watch the recording",
   },
   {
+    slug: "abuja-leadership-workshop",
     date: "2025-10-01",
     when: "2025",
     title: "Abuja Leadership Workshop",
@@ -229,22 +287,74 @@ export const EVENTS = [
     body: "Emerging African leaders from government, civil society and public service on geopolitics, power shifts, diplomacy, conflict resolution and regional cooperation.",
   },
   {
+    slug: "strategy-reform-responsible-leadership-2026",
     date: "2026-03-21",
-    when: "21 Mar 2026",
-    title: "Leadership, Politics & Governance: A Practical Conversation",
-    kind: "Conversation",
-    place: "Hybrid · Live + YouTube",
-    body: "A practitioner conversation on what it really takes to lead, run and govern.",
+    when: "Sat, 21 Mar 2026",
+    time: "11:00 am WAT",
+    series: "Public Office Readiness Colloquium",
+    title: "Strategy, Reform & Responsible Leadership",
+    kind: "Colloquium",
+    place: "Online",
+    body: "A Public Office Readiness Colloquium on legislative leadership, electoral strategy and ethical statesmanship — with a senator, a federal legislator, a governance strategist and a leading democracy advocate.",
+    image: "/images/events/colloquium-2026-flyer.jpg",
+    agendaImage: "/images/events/colloquium-2026-agenda.jpg",
+    speakers: [
+      { name: "Sen. Ireti Kingibe", role: "Senator representing the Federal Capital Territory" },
+      { name: "Hon. Babajimi Benson", role: "Member of the House of Representatives, Ikorodu Federal Constituency, Lagos State" },
+      { name: "Dr. Otive Igbuzor", role: "Founding Executive Director, African Centre for Leadership, Strategy & Development (Centre LSD)" },
+      { name: "Samson Itodo", role: "Lawyer and Founder of Yiaga Africa" },
+    ],
+    moderators: ["Amirah Hassan", "Ekenedilichukwu Charles Emmanuel"],
+    poweredBy: ["SPLN Political Leadership Development & Mentorship Committee", "SPLN Innovating African Politics & Governance Committee"],
+    agenda: [
+      {
+        title: "Opening Session",
+        items: [
+          { title: "Participants logging on", who: "Moderator" },
+          { title: "Introduction of event", who: "Moderator" },
+          { title: "Welcome address", who: "Mrs. Alero Ayida-Otobo, CEO SPPG Africa" },
+          { title: "Founder's remarks", who: "Dr. Obiageli “Oby” Ezekwesili, Founder SPPG & #FixPolitics" },
+          { title: "Speakers' bio", who: "Moderator" },
+        ],
+      },
+      {
+        title: "1st Segment: Legislative Leadership",
+        items: [
+          { title: "Navigating Legislative Power, Reform, and Leadership in Public Office", who: "Sen. Ireti Kingibe & Moderator" },
+          { title: "Session 1 Q&A", who: "Sen. Ireti Kingibe & Moderator" },
+          { title: "Speakers' bio", who: "Moderator" },
+          { title: "Trail to Legislative Impact: Strategy, Credibility & Performance", who: "Hon. Babajimi Benson & Moderator" },
+          { title: "Session 2 Q&A", who: "Hon. Babajimi Benson & Moderator" },
+          { title: "Close 1st segment / polls", who: "Moderator" },
+        ],
+      },
+      {
+        title: "2nd Segment: Electoral Strategy",
+        items: [
+          { title: "Winning within the Rules: Electoral Strategy & Democratic Reform", who: "Mr. Samson Itodo & Moderator" },
+          { title: "2nd Segment Q&A", who: "Mr. Samson Itodo & Moderator" },
+          { title: "Close 2nd segment, intermission & 3rd segment polls/Slido", who: "Moderator" },
+          { title: "Introduce 3rd segment", who: "Moderator" },
+          { title: "Statesmanship Beyond Victory: Responsible Leadership & Ethics", who: "Dr. Otive Igbuzor & Moderator" },
+          { title: "3rd Segment Q&A", who: "Dr. Otive Igbuzor & Moderator" },
+          { title: "Close 3rd segment", who: "Moderator" },
+          { title: "Closing remarks & next steps", who: "Dr. Samson Bisiriyu and Mr. Jude McKelvin Oseh, Leads of the Organising Committees" },
+        ],
+      },
+    ],
   },
   {
+    slug: "kenya-graduation-induction-2026",
     date: "2026-07-31",
     when: "Jul 2026",
     title: "Kenya Graduation & Induction",
     kind: "Induction",
     place: "Nairobi, Kenya",
     body: "Kenya's pioneer class graduates and is formally inducted into SPLN.",
+    image: "/images/ke-flags-crowd.jpg",
   },
   {
+    slug: "spln-general-meeting-q4-2026",
     date: "2026-12-31",
     when: "Q4 2026",
     title: "Bi-annual SPLN General Meeting",

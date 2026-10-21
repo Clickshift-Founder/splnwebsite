@@ -6,9 +6,10 @@ import { PGlite } from "@electric-sql/pglite";
 import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 
 const PORT = Number(process.env.PGLITE_PORT ?? 54329);
-mkdirSync("./.data/pglite", { recursive: true });
+const DIR = process.env.PGLITE_DIR ?? "./.data/pglite";
+mkdirSync(DIR, { recursive: true });
 
-const db = await PGlite.create("./.data/pglite");
+const db = await PGlite.create(DIR);
 // Next dev opens a connection per server bundle and keeps them idle; queries are serialised by PGlite anyway.
 const server = new PGLiteSocketServer({ db, port: PORT, host: "127.0.0.1", maxConnections: 64, debug: !!process.env.PGLITE_DEBUG });
 await server.start();

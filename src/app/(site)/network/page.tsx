@@ -89,6 +89,14 @@ export default function NetworkPage() {
                   <span className={cn("block h-1 w-10 rounded-full", ACCENT_BG[ACCENTS[i]])} />
                   <p className="mt-5 text-lg font-extrabold leading-snug">{c.name}</p>
                   <p className="mt-2 text-sm leading-relaxed text-white/65">{c.body}</p>
+                  <div className="mt-auto border-t border-white/10 pt-4">
+                    <p className="text-[0.7rem] font-extrabold uppercase tracking-wider text-white/45">{"leadLabel" in c ? c.leadLabel : c.leads.length > 1 ? "Leads" : "Lead"}</p>
+                    <ul className="mt-1.5 space-y-0.5 text-sm font-bold text-white/90">
+                      {c.leads.map((l) => (
+                        <li key={l}>{l}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </Reveal>
             ))}
@@ -137,9 +145,9 @@ export default function NetworkPage() {
                 </li>
               ))}
             </ul>
-            <div className="relative mt-10 aspect-[16/10] overflow-hidden rounded-[16px]">
-              <Image src="/images/sn-certificate.jpg" alt="An SPPG Senegal graduate receiving a certificate" fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover" />
-            </div>
+            <a href={SITE.mentorApplyUrl} target="_blank" rel="noopener noreferrer" className="group relative mt-10 block aspect-square max-w-md overflow-hidden rounded-[16px] ring-1 ring-line">
+              <Image src={PEERBRIDGE.mentorImage} alt="SPPG PeerBridge Mentorship Programme — register to become a PeerBridge mentor" fill sizes="(min-width: 1024px) 28rem, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+            </a>
           </div>
           <div className="space-y-6">
             <div className="rounded-[16px] bg-white p-7 md:p-8">
@@ -157,8 +165,8 @@ export default function NetworkPage() {
             <div className="rounded-[16px] bg-night p-7 text-white md:p-8">
               <p className="text-2xl font-extrabold">Become a mentor</p>
               <p className="mt-3 leading-relaxed text-white/70">{PEERBRIDGE.mentorAsk}</p>
-              <ButtonLink href={`mailto:${SITE.contactEmail}?subject=PeerBridge mentor application`} variant="light" arrow className="mt-6">
-                Apply to mentor
+              <ButtonLink href={SITE.mentorApplyUrl} variant="light" arrow className="mt-6">
+                Register as a mentor
               </ButtonLink>
             </div>
           </div>

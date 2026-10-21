@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BadgeCheck, BookOpenCheck } from "lucide-react";
 import { PostCard, TYPE_LABEL } from "@/components/site/cards";
-import { Avatar, ButtonLink, FrameBar } from "@/components/ui/primitives";
+import { Avatar, ButtonLink, FrameBar, SampleBadge } from "@/components/ui/primitives";
 import { Markdown } from "@/components/ui/markdown";
 import { formatDate, readingTime } from "@/lib/text";
 import { getPublishedPost, listPublishedPosts } from "@/lib/queries";
@@ -36,7 +36,8 @@ export default async function InsightPage({ params }: { params: Params }) {
           <Link href="/insights" className="inline-flex items-center gap-1.5 text-sm font-bold text-white/70 hover:text-white">
             <ArrowLeft className="size-4" /> Insights
           </Link>
-          <p className="eyebrow mt-8 text-green">
+          <p className="eyebrow mt-8 flex flex-wrap items-center gap-2 text-green">
+            {p.isSample && <SampleBadge />}
             {TYPE_LABEL[p.type]}
             {p.topic && <span className="text-white/60"> · {p.topic}</span>}
           </p>

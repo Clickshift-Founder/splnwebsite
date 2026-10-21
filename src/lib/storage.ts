@@ -29,3 +29,18 @@ export async function storeImage(file: File, folder: string): Promise<string> {
   await writeFile(path.join(process.cwd(), "public", "uploads", name), Buffer.from(await file.arrayBuffer()));
   return `/uploads/${name}`;
 }
+
+/** Best-effort delete of a file we stored (Blob or local dev upload). Never throws. */
+export async function deleteStored(url: string) {
+  try {
+    if (/\.public\.blob\.vercel-storage\.com\//.test(url) && process.env.BLOB_READ_WRITE_TOKEN) {
+      const { del } = await import("@vercel/blob");
+      await del(url);
+    } else if (url.startsWith("/uploads/")) {
+      const { unlink } = await import("node:fs/promises");
+      await unlink(path.join(process.cwd(), "public", url));
+    }
+  } catch (e) {
+    console.error("[storage] delete failed", url, e);
+  }
+}

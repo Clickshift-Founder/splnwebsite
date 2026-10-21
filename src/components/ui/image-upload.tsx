@@ -4,30 +4,51 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/brand";
 
-/** Downscale in the browser before upload — phones produce 8MB photos; we need ~300KB. */
-async function resize(file: File, max: number): Promise<Blob> {
-  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
-  const bmp = await createImageBitmap(file).catch(() => null);
-  if (!bmp) return file;
-  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bmp.width * scale);
-  canvas.height = Math.round(bmp.height * scale);
-  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-  const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/webp", 0.86));
-  return blob ?? file;
+/** Uploads must stay under Vercel's 4.5 MB request limit — leave headroom. */
+const TARGET_BYTES = 3.5 * 1024 * 1024;
+
+export type Compressed = { blob: Blob; width: number; height: number };
+
+/**
+ * Shrinks a photo in the browser before upload, keeping it sharp: scale the long edge down to
+ * `max` px (phones shoot 4000–6000 px), re-encode as WebP at high quality, and only step quality
+ * down if the file is still too big. A 12 MB graduation photo typically lands at 400–900 KB.
+ * EXIF orientation is honoured by createImageBitmap, so portraits stay upright.
+ */
+export async function compressImage(file: File, max = 2400): Promise<Compressed> {
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" }).catch(() => null);
+  if (!bmp) throw new Error(`"${file.name}" isn't an image this browser can read. Use JPEG, PNG or WebP.`);
+  let scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const width = Math.round(bmp.width * scale);
+    const height = Math.round(bmp.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bmp, 0, 0, width, height);
+    for (const q of [0.88, 0.8, 0.72]) {
+      const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/webp", q));
+      if (blob && blob.size <= TARGET_BYTES) return { blob, width, height };
+    }
+    scale *= 0.8; // still too big even at q=0.72 — reduce dimensions and retry
+  }
+  throw new Error(`"${file.name}" is too large to compress. Try a smaller image.`);
 }
 
-async function upload(file: File, folder: string, max: number): Promise<string> {
-  const blob = await resize(file, max);
+export async function uploadImage(file: File, folder: string, max: number): Promise<{ url: string; width: number; height: number }> {
+  const { blob, width, height } = await compressImage(file, max);
   const fd = new FormData();
-  fd.append("file", new File([blob], file.name.replace(/\.\w+$/, ".webp"), { type: blob.type || file.type }));
+  fd.append("file", new File([blob], file.name.replace(/\.\w+$/, "") + ".webp", { type: "image/webp" }));
   fd.append("folder", folder);
   const res = await fetch("/api/upload", { method: "POST", body: fd });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? "Upload failed");
-  return json.url as string;
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error ?? `Upload failed (${res.status})`);
+  return { url: json.url as string, width, height };
 }
+
+const upload = async (file: File, folder: string, max: number) => (await uploadImage(file, folder, max)).url;
 
 /** Single image field. Writes the uploaded URL into a hidden input called `name`. */
 export function ImageUpload({

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FileText, Globe2, LayoutDashboard, Megaphone, Sparkles, UserCog, Users } from "lucide-react";
+import { BarChart3, FileText, Globe2, Images, LayoutDashboard, Megaphone, Sparkles, UserCog, Users } from "lucide-react";
 import { cn } from "@/lib/brand";
 
 const ITEMS = [
@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/admin/posts", label: "Insights & review", Icon: FileText },
   { href: "/admin/spotlights", label: "Spotlight", Icon: Sparkles },
   { href: "/admin/nominations", label: "Nominations", Icon: Megaphone },
+  { href: "/admin/gallery", label: "Gallery", Icon: Images },
   { href: "/admin/graduates", label: "Graduates", Icon: Users },
   { href: "/admin/stats", label: "Numbers", Icon: BarChart3 },
   { href: "/admin/countries", label: "Countries & classes", Icon: Globe2, superOnly: true },

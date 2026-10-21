@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight, BadgeCheck, Landmark } from "lucide-react";
 import { Flag } from "@/components/ui/flag";
-import { Avatar, Badge } from "@/components/ui/primitives";
+import { Avatar, Badge, SampleBadge } from "@/components/ui/primitives";
 import { OFFICE_LABEL, countryAccent } from "@/lib/brand";
 import { formatDate, readingTime } from "@/lib/text";
 import type { PublicGraduate, PostListItem, SpotlightItem } from "@/lib/queries";
@@ -32,6 +32,7 @@ export function GraduateCard({ g }: { g: Omit<PublicGraduate, "bio"> & { bio?: s
         <Badge accent={countryAccent(g.countryCode)}>
           <Flag code={g.countryCode} emoji={g.countryFlag} /> {g.cohortName}
         </Badge>
+        {g.isSample && <SampleBadge />}
         {g.officeStatus !== "none" && (
           <Badge className="bg-ink text-white ring-0">
             <Landmark className="size-3" /> {OFFICE_LABEL[g.officeStatus]}
@@ -54,7 +55,10 @@ export function SpotlightCard({ s, large = false }: { s: SpotlightItem; large?: 
           <div className="tile-gradient absolute inset-0" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent" />
-        <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-extrabold text-ink">{s.category}</span>
+        <span className="absolute left-4 top-4 flex items-center gap-1.5">
+          <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-extrabold text-ink">{s.category}</span>
+          {s.isSample && <SampleBadge />}
+        </span>
       </div>
       <div className="flex flex-1 flex-col p-6">
         <h3 className={large ? "text-2xl font-extrabold leading-tight md:text-3xl" : "text-xl font-extrabold leading-snug"}>{s.title}</h3>
@@ -99,7 +103,8 @@ export function PostCard({ p, horizontal = false }: { p: PostListItem; horizonta
         )}
       </div>
       <div className={horizontal ? "" : "flex flex-1 flex-col p-6"}>
-        <p className="eyebrow text-green-deep">
+        <p className="eyebrow flex flex-wrap items-center gap-2 text-green-deep">
+          {p.isSample && <SampleBadge />}
           {TYPE_LABEL[p.type]}
           {p.topic ? <span className="text-slate"> · {p.topic}</span> : null}
         </p>
@@ -128,7 +133,9 @@ export function FeaturedPostCard({ p }: { p: PostListItem }) {
         )}
       </div>
       <div className="flex flex-col justify-center p-7 md:p-12">
-        <p className="eyebrow text-green">Featured · {TYPE_LABEL[p.type]}</p>
+        <p className="eyebrow flex items-center gap-2 text-green">
+          {p.isSample && <SampleBadge />} Featured · {TYPE_LABEL[p.type]}
+        </p>
         <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight md:text-4xl">{p.title}</h2>
         {p.excerpt && <p className="mt-4 line-clamp-4 text-white/70 md:text-lg">{p.excerpt}</p>}
         <p className="mt-6 text-sm font-semibold text-white/60">

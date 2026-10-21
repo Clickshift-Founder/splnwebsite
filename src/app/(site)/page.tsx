@@ -8,18 +8,21 @@ import { ButtonLink, FrameBar, SectionHeading, TextLink, Badge } from "@/compone
 import { CountUp, Reveal } from "@/components/ui/motion";
 import { HERO, NOT_ALUMNI, PATH, SITE, THREE_CS } from "@/content/site";
 import { ACCENT_BG, ACCENT_TEXT, cn, countryAccent } from "@/lib/brand";
-import { getFeaturedFaces, getNetworkTotals, getStatMap, listPublishedPosts, listSpotlights } from "@/lib/queries";
+import { getFeaturedFaces, getNetworkTotals, getStatMap, listGallery, listPublishedPosts, listSpotlights } from "@/lib/queries";
 
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [totals, stat, spotlights, posts, faces] = await Promise.all([
+  const [totals, stat, spotlights, posts, faces, featuredPhotos, latestPhotos] = await Promise.all([
     getNetworkTotals(),
     getStatMap(),
     listSpotlights({ limit: 3 }),
     listPublishedPosts({ limit: 3 }),
     getFeaturedFaces(6),
+    listGallery({ featuredOnly: true, limit: 8 }),
+    listGallery({ limit: 8 }),
   ]);
+  const photos = featuredPhotos.length >= 4 ? featuredPhotos : latestPhotos;
   const office = ["aspirants", "candidates", "appointed", "elected"].map((k) => stat[k]).filter(Boolean);
   const inOffice = (stat.appointed?.value ?? 0) + (stat.elected?.value ?? 0);
 
@@ -383,6 +386,34 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ───────────────────────── IN PICTURES ───────────────────────── */}
+      {photos.length >= 4 && (
+        <section className="pb-20 md:pb-28">
+          <div className="container-x">
+            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+              <SectionHeading eyebrow="In pictures" title="Moments from the movement." lead="Graduations and convenings across Nigeria, Senegal, Kenya and beyond." />
+              <TextLink href="/gallery" className="shrink-0">
+                Open the gallery
+              </TextLink>
+            </div>
+            <div className="mt-10 grid auto-rows-[160px] grid-cols-2 gap-3 md:auto-rows-[200px] md:grid-cols-4">
+              {photos.slice(0, 6).map((p, i) => (
+                <Link
+                  key={p.id}
+                  href={`/gallery?country=${p.countryCode}`}
+                  className={cn("group relative overflow-hidden rounded-[12px] bg-sand", i === 0 && "col-span-2 row-span-2", i === 3 && "md:col-span-2")}
+                >
+                  <Image src={p.url} alt={p.caption ?? ""} fill sizes={i === 0 ? "(min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 25vw, 50vw"} className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-night/80 to-transparent p-3 pt-10 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 md:text-sm">
+                    {p.cohortName ?? p.occasion}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ───────────────────────── CLOSING CTA ───────────────────────── */}
       <section className="relative overflow-hidden bg-night text-white">

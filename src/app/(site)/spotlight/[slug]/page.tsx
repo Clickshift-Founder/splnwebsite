@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BadgeCheck, ExternalLink, FileCheck2 } from "lucide-react";
 import { SpotlightCard } from "@/components/site/cards";
-import { Avatar, FrameBar, buttonClass } from "@/components/ui/primitives";
+import { Avatar, FrameBar, SampleBadge, buttonClass } from "@/components/ui/primitives";
 import { Flag } from "@/components/ui/flag";
 import { Markdown } from "@/components/ui/markdown";
 import { formatDate } from "@/lib/text";
@@ -40,7 +40,10 @@ export default async function SpotlightStoryPage({ params }: { params: Params })
           <Link href="/spotlight" className="inline-flex items-center gap-1.5 text-sm font-bold text-white/70 hover:text-white">
             <ArrowLeft className="size-4" /> Spotlight
           </Link>
-          <p className="mt-8 inline-block rounded-full bg-white px-3 py-1 text-xs font-extrabold text-ink">{s.category}</p>
+          <p className="mt-8 flex items-center gap-2">
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-extrabold text-ink">{s.category}</span>
+            {s.isSample && <SampleBadge />}
+          </p>
           <h1 className="mt-5 max-w-4xl text-4xl font-black leading-[1.03] tracking-[-0.03em] md:text-6xl">{s.title}</h1>
           {s.summary && <p className="mt-5 max-w-2xl text-lg text-white/80 md:text-xl">{s.summary}</p>}
           <div className="mt-8 flex items-center gap-4">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { SITE } from "@/content/site";
 import { FrameEdge, ButtonLink } from "@/components/ui/primitives";
-import { XIcon, LinkedInIcon, FacebookIcon } from "@/components/ui/social-icons";
+import { XIcon, LinkedInIcon, FacebookIcon, InstagramIcon, YouTubeIcon } from "@/components/ui/social-icons";
 import { Flag } from "@/components/ui/flag";
 import type { Country } from "@/db/schema";
 
@@ -32,6 +32,7 @@ const COLUMNS = [
       { href: "/insights", label: "Insights" },
       { href: "/write", label: "Write for SPLN" },
       { href: "/events", label: "Events" },
+      { href: "/gallery", label: "Gallery" },
       { href: "/join", label: "How to join" },
     ],
   },
@@ -51,7 +52,9 @@ export function SiteFooter({ countries }: { countries: Country[] }) {
             {[
               { href: SITE.socials.linkedin, Icon: LinkedInIcon, label: "LinkedIn" },
               { href: SITE.socials.x, Icon: XIcon, label: "X" },
+              { href: SITE.socials.instagram, Icon: InstagramIcon, label: "Instagram" },
               { href: SITE.socials.facebook, Icon: FacebookIcon, label: "Facebook" },
+              { href: SITE.socials.youtube, Icon: YouTubeIcon, label: "YouTube" },
             ]
               .filter((s) => s.href)
               .map(({ href, Icon, label }) => (
