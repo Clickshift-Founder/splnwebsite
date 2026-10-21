@@ -38,7 +38,7 @@ export default async function JoinPage() {
     <>
       <PageHero
         eyebrow="How to join"
-        image="/images/grad-stage.jpg"
+        image="/images/gallery/ng-2023/03.jpg"
         title={
           <>
             There is one door into SPLN. <span className="text-tile-gradient">It starts at SPPG.</span>

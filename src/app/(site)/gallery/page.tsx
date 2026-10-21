@@ -44,7 +44,7 @@ export default async function GalleryPage({ searchParams }: { searchParams: Prom
     <>
       <PageHero
         eyebrow="Gallery"
-        image="/images/sn-class-wide.jpg"
+        image="/images/gallery/ng-2025/04.jpg"
         title={
           <>
             Every class. <span className="text-tile-gradient">Every country.</span> One movement.

@@ -3,7 +3,8 @@
 // it never overwrites anything directors have edited in the console.
 import "./_env";
 import { createDb } from "../src/db/connect";
-import { countries, cohorts, stats, posts, galleryPhotos } from "../src/db/schema";
+import { eq } from "drizzle-orm";
+import { auditLog, countries, cohorts, stats, posts, galleryPhotos } from "../src/db/schema";
 import bcrypt from "bcryptjs";
 import { admins } from "../src/db/schema";
 import { normaliseEmail } from "../src/lib/text";
@@ -112,6 +113,58 @@ const GALLERY = [
   { url: "/images/ke-embrace.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "A Kenyan graduate is congratulated on stage", featured: false },
 ];
 
+/** Graduation photos from the SPPG Drive archive (curated 2026-10-21). Inserted once, tracked by an audit marker. */
+const GALLERY_V2 = [
+  { url: "/images/gallery/ke-2026/01.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "Graduates wave the Kenyan flag at the pioneer ceremony", featured: false },
+  { url: "/images/gallery/ke-2026/02.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "A graduate is embraced on stage", featured: false },
+  { url: "/images/gallery/ke-2026/03.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "Certificate presentation", featured: false },
+  { url: "/images/gallery/ke-2026/04.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "Graduates with their certificates", featured: false },
+  { url: "/images/gallery/ke-2026/05.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "Graduates with SPPG leadership and guests", featured: false },
+  { url: "/images/gallery/ke-2026/06.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "The hall celebrates Kenya's pioneer class", featured: false },
+  { url: "/images/gallery/ke-2026/07.jpg", width: 1600, height: 900, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "Kenya's Pioneer Class of 2026 on stage", featured: true },
+  { url: "/images/gallery/ke-2026/08.jpg", width: 1600, height: 1067, countryCode: "KE", cohort: "ke-2026", occasion: "Graduation", caption: "Two graduates celebrate after the ceremony", featured: false },
+  { url: "/images/gallery/ng-2022/01.jpg", width: 1600, height: 1156, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "The Class of 2022 with faculty and guests", featured: true },
+  { url: "/images/gallery/ng-2022/02.jpg", width: 1600, height: 1332, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "Graduates at the Class of 2022 celebration", featured: false },
+  { url: "/images/gallery/ng-2022/03.jpg", width: 1600, height: 982, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "Graduates and faculty at the step-and-repeat", featured: false },
+  { url: "/images/gallery/ng-2022/04.jpg", width: 1600, height: 1260, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "Certificate presentation", featured: false },
+  { url: "/images/gallery/ng-2022/05.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "Guests applaud the graduands", featured: false },
+  { url: "/images/gallery/ng-2022/06.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "A full hall at the Class of 2022 graduation", featured: false },
+  { url: "/images/gallery/ng-2022/07.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "An embrace at the ceremony", featured: false },
+  { url: "/images/gallery/ng-2022/08.jpg", width: 1600, height: 1303, countryCode: "NG", cohort: "ng-2022", occasion: "Graduation", caption: "Congratulations at the ceremony", featured: false },
+  { url: "/images/gallery/ng-2023/01.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "Celebration in the front row", featured: false },
+  { url: "/images/gallery/ng-2023/02.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "Guests and graduands in the hall", featured: false },
+  { url: "/images/gallery/ng-2023/03.jpg", width: 1600, height: 1340, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "The Class of 2023 on stage — “Building a Connected & Resilient Africa”", featured: true },
+  { url: "/images/gallery/ng-2023/04.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "Graduates celebrate", featured: false },
+  { url: "/images/gallery/ng-2023/05.jpg", width: 1600, height: 1193, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "Graduates on stage", featured: false },
+  { url: "/images/gallery/ng-2023/06.jpg", width: 1600, height: 1135, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "Graduates at the step-and-repeat", featured: false },
+  { url: "/images/gallery/ng-2023/07.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "A graduate is congratulated on stage", featured: false },
+  { url: "/images/gallery/ng-2023/08.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2023", occasion: "Graduation", caption: "A standing ovation for the Class of 2023", featured: false },
+  { url: "/images/gallery/ng-2024/01.jpg", width: 1600, height: 1104, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "Graduands cheer as the ceremony begins", featured: false },
+  { url: "/images/gallery/ng-2024/02.jpg", width: 1600, height: 1492, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "Certificate presentation", featured: false },
+  { url: "/images/gallery/ng-2024/03.jpg", width: 1600, height: 946, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "A full house at the Class of 2024 graduation", featured: true },
+  { url: "/images/gallery/ng-2024/04.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "Graduates on stage", featured: false },
+  { url: "/images/gallery/ng-2024/05.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "An award presentation", featured: false },
+  { url: "/images/gallery/ng-2024/06.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "Graduands applaud", featured: false },
+  { url: "/images/gallery/ng-2024/07.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "Congratulations on stage", featured: false },
+  { url: "/images/gallery/ng-2024/08.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2024", occasion: "Graduation", caption: "A graduate celebrates", featured: false },
+  { url: "/images/gallery/ng-2025/01.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "Graduands wave flags in celebration", featured: false },
+  { url: "/images/gallery/ng-2025/02.jpg", width: 1067, height: 1600, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "A saxophone performance at the Class of 2025 ceremony", featured: false },
+  { url: "/images/gallery/ng-2025/03.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "The ceremony from the floor", featured: false },
+  { url: "/images/gallery/ng-2025/04.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "A sea of green — the Class of 2025", featured: true },
+  { url: "/images/gallery/ng-2025/05.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "Congratulations on stage", featured: false },
+  { url: "/images/gallery/ng-2025/06.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "Graduates with their award", featured: false },
+  { url: "/images/gallery/ng-2025/07.jpg", width: 1600, height: 1067, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "Graduates and their award at the step-and-repeat", featured: false },
+  { url: "/images/gallery/ng-2025/08.jpg", width: 1600, height: 1276, countryCode: "NG", cohort: "ng-2025", occasion: "Graduation", caption: "Certificate presentation", featured: false },
+  { url: "/images/gallery/sn-2025/01.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "Graduates and guests at the Remise de Diplômes, Dakar", featured: true },
+  { url: "/images/gallery/sn-2025/02.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "A guest addresses the ceremony", featured: false },
+  { url: "/images/gallery/sn-2025/03.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "Remarks at the Remise de Diplômes", featured: false },
+  { url: "/images/gallery/sn-2025/04.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "Remarks at the ceremony", featured: false },
+  { url: "/images/gallery/sn-2025/05.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "An award presentation", featured: false },
+  { url: "/images/gallery/sn-2025/06.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "Certificate presentation", featured: false },
+  { url: "/images/gallery/sn-2025/07.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "Certificate presentation", featured: false },
+  { url: "/images/gallery/sn-2025/08.jpg", width: 1600, height: 1280, countryCode: "SN", cohort: "sn-2025", occasion: "Graduation", caption: "A graduate receives her certificate", featured: false },
+];
+
 export async function seedBaseline(db: DB) {
 
   for (const c of COUNTRIES) {
@@ -136,6 +189,20 @@ export async function seedBaseline(db: DB) {
       const { cohort, ...rest } = g;
       await db.insert(galleryPhotos).values({ ...rest, cohortId: all.find((c) => c.slug === cohort)?.id ?? null, sortOrder: i });
     }
+  }
+
+  // Later photo batches: insert once (audit marker), never re-add photos a director deleted.
+  const [v2] = await db.select({ id: auditLog.id }).from(auditLog).where(eq(auditLog.action, "seed.gallery.v2"));
+  if (!v2) {
+    const all = await db.select({ id: cohorts.id, slug: cohorts.slug }).from(cohorts);
+    const existing = new Set((await db.select({ url: galleryPhotos.url }).from(galleryPhotos)).map((r) => r.url));
+    const fresh = GALLERY_V2.filter((g) => !existing.has(g.url));
+    if (fresh.length) {
+      await db.insert(galleryPhotos).values(
+        fresh.map(({ cohort, ...rest }, i) => ({ ...rest, cohortId: all.find((c) => c.slug === cohort)?.id ?? null, sortOrder: 10 + i })),
+      );
+    }
+    await db.insert(auditLog).values({ actor: "system", action: "seed.gallery.v2", meta: { inserted: fresh.length } });
   }
 
   // First director from env — created once. Later password changes happen in the console and are never reset here.

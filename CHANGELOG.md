@@ -30,6 +30,10 @@ Sections: **Added · Changed · Fixed · Security · Data · Notes**. Dates are 
   star for homepage, delete (also deletes the stored file). Photos are compressed **in the browser** before upload —
   long edge 2400px, WebP, quality stepped down only as needed to stay < 3.5 MB (a 7.5 MB 6000×4000 test photo became
   513 KB) — which also keeps every upload under Vercel's 4.5 MB request limit.
+- **48 graduation photos** curated from the SPPG Drive archive (~4,500 photos reviewed via contact sheets): 8 each for
+  Nigeria's Classes of 2022–2025, Senegal 2025 and Kenya 2026 — resized to 1600px (~210 KB each), captioned by what
+  each photo shows, one per class starred for the homepage. Inserted once on deploy (audit marker `seed.gallery.v2`),
+  so photos a director deletes stay deleted. New hero images on Gallery, How to Join and About.
 - **Event pages** (`/events/[slug]`): flyer, speakers, full programme by segment, moderators, organising committees,
   printed agenda. First: *Strategy, Reform & Responsible Leadership* (Public Office Readiness Colloquium, 21 Mar 2026).
 - **Demo mode**: Admin dashboard → "Load sample content" adds 4 Spotlight stories, 3 Insights posts and 6 sample

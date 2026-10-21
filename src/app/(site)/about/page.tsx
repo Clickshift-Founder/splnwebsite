@@ -19,7 +19,7 @@ export default function AboutPage() {
     <>
       <PageHero
         eyebrow="About SPLN"
-        image="/images/afcon-group.jpg"
+        image="/images/gallery/ng-2022/01.jpg"
         title={
           <>
             Graduating <span className="text-tile-gradient">into</span> something — not out of it.
