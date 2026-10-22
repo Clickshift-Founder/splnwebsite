@@ -5,6 +5,22 @@ Sections: **Added · Changed · Fixed · Security · Data · Notes**. Dates are 
 
 ---
 
+## [0.2.1] — 2026-10-22 · Mentor gate, mobile search, new contact email
+
+### Changed
+- **PeerBridge mentor form is graduates-only.** Every "Register as a mentor" link now goes to `/member/mentor`, which requires
+  graduate sign-in; the Airtable form link is only shown to verified graduates (and never appears in public page HTML).
+  Signed-out visitors see a note explaining why they are asked to verify. Mentor card added to the graduate dashboard.
+- **Search scrolls to results.** After a directory search, filter or page change (and after a homepage "Verify" search)
+  the results are scrolled into view, so phone users don't tap Search and see nothing change.
+- Secretariat contact email is now **spln@thesppg.org** (was pln@nigeria.thesppg.org).
+
+### Verified
+- Headless Chrome at 390px: search from /graduates and from the homepage lands on the results; anonymous /member/mentor →
+  sign-in with notice → after code verification → mentor page with the form link; no Airtable URL on /network; footer email.
+
+---
+
 ## [0.2.0] — 2026-10-21 · Deploy fix, Gallery, Events, Demo mode
 
 ### Fixed

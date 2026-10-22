@@ -10,7 +10,7 @@ export const SITE = {
   parent: "School of Politics, Policy & Governance",
   parentUrl: "https://thesppg.org",
   applyUrl: "https://thesppg.org/admissions",
-  contactEmail: "pln@nigeria.thesppg.org",
+  contactEmail: "spln@thesppg.org",
   tagline: "A community of public leaders. Africa's future in action.",
   launchVideo: "https://drive.google.com/file/d/1czusc9HbXYkJfLP3vZi4PDXl_89sr5z7/view",
   // Official SPPG social accounts (empty string = icon hidden).
@@ -21,7 +21,10 @@ export const SITE = {
     facebook: "https://www.facebook.com/share/1C3qhm5969/",
     youtube: "https://youtube.com/@sppgnigeria",
   },
+  // The Airtable form is only revealed to verified graduates (/member/mentor) so external visitors
+  // don't fill the mentor pool. Link to MENTOR_PATH everywhere on the public site.
   mentorApplyUrl: "https://airtable.com/appYLxafaqe5BUo0Q/shrqp7PQJQS7544TJ",
+  mentorPath: "/member/mentor",
 };
 
 export const NAV = [

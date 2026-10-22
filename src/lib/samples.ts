@@ -242,7 +242,7 @@ Graduates with 5+ years of leadership experience — public servants, civic lead
 
 A structured six-month cycle: a virtual orientation, monthly one-on-one check-ins, at least one learning circle, and short reflections at the midpoint and the end.
 
-[Register to become a PeerBridge mentor](https://airtable.com/appYLxafaqe5BUo0Q/shrqp7PQJQS7544TJ)`,
+[Register to become a PeerBridge mentor](/member/mentor) — graduates sign in with their registered email first.`,
     sources: "",
   },
 ];

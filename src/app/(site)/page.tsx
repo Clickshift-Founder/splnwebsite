@@ -278,7 +278,7 @@ export default async function HomePage() {
               title="Every graduate, publicly verifiable."
               lead={`Confirm that someone is a genuine SPPG graduate — by name, country or class. ${totals.graduates.toLocaleString("en-GB")} graduates, ${totals.cohorts} classes, ${totals.countriesWithGraduates} countries, one register.`}
             />
-            <form action="/graduates" className="mt-8 flex max-w-xl items-center gap-2 rounded-[8px] border border-line bg-white p-2 shadow-[0_12px_30px_-20px_rgba(14,21,18,0.4)] focus-within:border-green">
+            <form action="/graduates#results" className="mt-8 flex max-w-xl items-center gap-2 rounded-[8px] border border-line bg-white p-2 shadow-[0_12px_30px_-20px_rgba(14,21,18,0.4)] focus-within:border-green">
               <Search className="ml-2 size-5 shrink-0 text-slate" />
               <label htmlFor="home-q" className="sr-only">
                 Search graduates by name

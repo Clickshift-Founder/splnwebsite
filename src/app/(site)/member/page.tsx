@@ -10,6 +10,7 @@ import { requireMember } from "@/lib/auth";
 import { formatDate } from "@/lib/text";
 import { POST_STATUS } from "@/lib/brand";
 import { withdrawPost } from "./actions";
+import { SITE } from "@/content/site";
 
 export const metadata: Metadata = { title: "My SPLN", robots: { index: false } };
 
@@ -88,6 +89,14 @@ export default async function MemberDashboard({ searchParams }: { searchParams: 
             <p className="mt-1 text-sm text-white/70">Launched something, won a primary, took up an appointment? Nominate yourself or a classmate for the Spotlight.</p>
             <ButtonLink href="/spotlight#nominate" size="sm" variant="light" className="mt-4">
               Share a Spotlight story
+            </ButtonLink>
+          </div>
+
+          <div className="rounded-[16px] border border-line p-6">
+            <p className="text-lg font-extrabold">Mentor the next class</p>
+            <p className="mt-1 text-sm text-slate">PeerBridge pairs every new SPPG student with a graduate who has walked the path. 5+ years of leadership experience required.</p>
+            <ButtonLink href={SITE.mentorPath} size="sm" variant="secondary" className="mt-4" arrow>
+              Become a PeerBridge mentor
             </ButtonLink>
           </div>
         </div>

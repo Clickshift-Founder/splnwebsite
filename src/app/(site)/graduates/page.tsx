@@ -6,6 +6,7 @@ import { EmptyState, FrameBar } from "@/components/ui/primitives";
 import { Flag } from "@/components/ui/flag";
 import { cn } from "@/lib/brand";
 import { getNetworkTotals, listGraduates } from "@/lib/queries";
+import { ScrollToResults } from "@/components/ui/scroll-to-results";
 
 export const metadata: Metadata = {
   title: "Graduate Directory",
@@ -55,7 +56,7 @@ export default async function GraduatesPage({ searchParams }: { searchParams: SP
             Every person listed here was admitted to SPPG, completed the ten-month programme, graduated and was attested on Character, Competence and Capacity. Search to confirm a graduate.
           </p>
 
-          <form action="/graduates" className="mt-9 flex max-w-2xl items-center gap-2 rounded-[8px] bg-white p-2 text-ink" role="search">
+          <form action="/graduates#results" className="mt-9 flex max-w-2xl items-center gap-2 rounded-[8px] bg-white p-2 text-ink" role="search">
             {sp.country && <input type="hidden" name="country" value={sp.country} />}
             {sp.cohort && <input type="hidden" name="cohort" value={sp.cohort} />}
             {sp.office && <input type="hidden" name="office" value={sp.office} />}
@@ -87,6 +88,7 @@ export default async function GraduatesPage({ searchParams }: { searchParams: SP
         </div>
       </section>
 
+      {filtered && <ScrollToResults targetId="results" signature={JSON.stringify(filters)} />}
       <section id="results" className="scroll-mt-24 py-12 md:py-16">
         <div className="container-x">
           <div className="flex flex-col gap-5 border-b border-line pb-6">

@@ -67,6 +67,11 @@ export default async function ClaimPage({ searchParams }: { searchParams: SP }) 
         </div>
 
         <div className="rounded-[16px] bg-white p-6 text-ink shadow-2xl md:p-8">
+          {next === SITE.mentorPath && (
+            <p className="mb-6 rounded-[8px] bg-blue-tint p-4 text-sm font-semibold text-ink">
+              PeerBridge mentoring is open to SPPG graduates only. Verify with your registered email to continue to the mentor registration form.
+            </p>
+          )}
           {target && (
             <div className="mb-6 flex items-center gap-4 border-b border-line pb-6">
               <Avatar name={target.fullName} src={target.photoUrl} size={56} />

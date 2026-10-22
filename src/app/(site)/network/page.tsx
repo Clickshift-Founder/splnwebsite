@@ -145,7 +145,7 @@ export default function NetworkPage() {
                 </li>
               ))}
             </ul>
-            <a href={SITE.mentorApplyUrl} target="_blank" rel="noopener noreferrer" className="group relative mt-10 block aspect-square max-w-md overflow-hidden rounded-[16px] ring-1 ring-line">
+            <a href={SITE.mentorPath} className="group relative mt-10 block aspect-square max-w-md overflow-hidden rounded-[16px] ring-1 ring-line">
               <Image src={PEERBRIDGE.mentorImage} alt="SPPG PeerBridge Mentorship Programme — register to become a PeerBridge mentor" fill sizes="(min-width: 1024px) 28rem, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
             </a>
           </div>
@@ -165,9 +165,10 @@ export default function NetworkPage() {
             <div className="rounded-[16px] bg-night p-7 text-white md:p-8">
               <p className="text-2xl font-extrabold">Become a mentor</p>
               <p className="mt-3 leading-relaxed text-white/70">{PEERBRIDGE.mentorAsk}</p>
-              <ButtonLink href={SITE.mentorApplyUrl} variant="light" arrow className="mt-6">
+              <ButtonLink href={SITE.mentorPath} variant="light" arrow className="mt-6">
                 Register as a mentor
               </ButtonLink>
+              <p className="mt-3 text-xs text-white/55">For SPPG graduates only — you&apos;ll confirm with the email SPPG holds for you.</p>
             </div>
           </div>
         </div>
