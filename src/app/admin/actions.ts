@@ -10,6 +10,7 @@ import { admins, cohorts, countries, galleryPhotos, graduates, nominations, post
 import { endAdminSession, requireAdmin, startAdminSession } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { importGraduatesCsv } from "@/lib/graduate-import";
+import { notifyAuthor } from "@/lib/notify";
 import { loadSamples, removeSamples } from "@/lib/samples";
 import { deleteStored } from "@/lib/storage";
 import { cleanName, normaliseEmail, slugify } from "@/lib/text";
@@ -329,19 +330,44 @@ export async function reviewPost(_prev: ActionResult, form: FormData): Promise<A
     })
     .where(eq(posts.id, id));
   await audit(`admin:${a.id}`, `post.review.${decision}`, `post:${id}`);
+  notifyAuthor(id, decision as "published" | "changes_requested" | "rejected");
   revalidatePublic();
   revalidatePath(`/insights/${p.slug}`);
-  return { ok: true, message: decision === "published" ? "Approved and published." : decision === "changes_requested" ? "Sent back to the author with your note." : "Declined. The author can see your note." };
+  return {
+    ok: true,
+    message:
+      decision === "published"
+        ? "Approved and published. The author has been emailed."
+        : decision === "changes_requested"
+          ? "Sent back to the author with your note (by email too)."
+          : "Declined. The author has your note by email and can revise and resubmit.",
+  };
 }
 
-export async function unpublishPost(form: FormData) {
+/**
+ * Takes a post off the site. A graduate's piece needs a reason: it goes back to them as "Changes requested"
+ * with that reason (and an email), so they can fix it and resubmit. Staff posts simply return to draft.
+ */
+export async function unpublishPost(_prev: ActionResult, form: FormData): Promise<ActionResult> {
   const a = await requireAdmin();
   const id = Number(form.get("id"));
-  const [p] = await db.update(posts).set({ status: "draft", updatedAt: new Date() }).where(eq(posts.id, id)).returning({ slug: posts.slug });
-  await audit(`admin:${a.id}`, "post.unpublish", `post:${id}`);
+  const reason = String(form.get("reason") ?? "").trim().slice(0, 3000);
+  const [p] = await db.select({ slug: posts.slug, authorGraduateId: posts.authorGraduateId }).from(posts).where(eq(posts.id, id));
+  if (!p) return fail("Post not found.");
+  if (p.authorGraduateId) {
+    if (reason.length < 10) return fail("Tell the author why it is being unpublished.", { reason: "Required — the author sees this." });
+    await db
+      .update(posts)
+      .set({ status: "changes_requested", reviewNote: reason, reviewedById: a.id, reviewedAt: new Date(), updatedAt: new Date() })
+      .where(eq(posts.id, id));
+    notifyAuthor(id, "unpublished");
+  } else {
+    await db.update(posts).set({ status: "draft", updatedAt: new Date() }).where(eq(posts.id, id));
+  }
+  await audit(`admin:${a.id}`, "post.unpublish", `post:${id}`, reason ? { reason } : undefined);
   revalidatePublic();
-  if (p) revalidatePath(`/insights/${p.slug}`);
-  revalidatePath(`/admin/posts/${id}`);
+  revalidatePath(`/insights/${p.slug}`);
+  redirect(`/admin/posts/${id}?unpublished=1`);
 }
 
 export async function deletePost(form: FormData) {

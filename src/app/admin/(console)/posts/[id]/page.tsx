@@ -13,12 +13,12 @@ import { DECLARATIONS, WRITING_STANDARDS } from "@/content/site";
 import { POST_STATUS } from "@/lib/brand";
 import { requireAdmin } from "@/lib/auth";
 import { formatDate, readingTime } from "@/lib/text";
-import { deletePost, unpublishPost } from "../../../actions";
-import { AdminPostForm, ReviewForm } from "../post-admin-forms";
+import { deletePost } from "../../../actions";
+import { AdminPostForm, ReviewForm, UnpublishForm } from "../post-admin-forms";
 
-export default async function AdminPostPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> }) {
+export default async function AdminPostPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; unpublished?: string }> }) {
   await requireAdmin();
-  const [{ id }, { saved }] = await Promise.all([params, searchParams]);
+  const [{ id }, { saved, unpublished }] = await Promise.all([params, searchParams]);
   if (id === "new")
     return (
       <>
@@ -59,10 +59,7 @@ export default async function AdminPostPage({ params, searchParams }: { params: 
                 <ButtonLink href={`/insights/${p.slug}`} size="sm" variant="secondary">
                   View live ↗
                 </ButtonLink>
-                <form action={unpublishPost}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <button className="h-9 rounded-[4px] border border-line bg-white px-3 text-sm font-bold hover:border-ink">Unpublish</button>
-                </form>
+                <UnpublishForm id={p.id} needsReason={!!p.authorGraduateId} />
               </>
             )}
             <form action={deletePost}>
@@ -75,6 +72,11 @@ export default async function AdminPostPage({ params, searchParams }: { params: 
         }
       />
       {saved && <p className="mb-6 rounded-[8px] bg-green-tint px-4 py-3 text-sm font-bold text-green-deep">Saved.</p>}
+      {unpublished && (
+        <p className="mb-6 rounded-[8px] bg-green-tint px-4 py-3 text-sm font-bold text-green-deep">
+          Unpublished.{p.authorGraduateId ? " It is back with the author as “Changes requested”, and they have your reason by email." : " It is back in draft."}
+        </p>
+      )}
 
       {author ? (
         <div className="grid gap-6 xl:grid-cols-[1fr_360px]">

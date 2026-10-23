@@ -5,6 +5,30 @@ Sections: **Added · Changed · Fixed · Security · Data · Notes**. Dates are 
 
 ---
 
+## [0.3.0] — 2026-10-23 · Email notifications, revise declined pieces, unpublish with a reason
+
+### Added
+- **Email notifications** (`src/lib/notify.ts`, sent after the response so they never slow or break an action):
+  - to the **graduate** when their piece is approved ("Published: …", with a link to it), sent back ("Changes
+    requested: …"), declined ("Not accepted: …") or unpublished ("Unpublished: …") — each with the editor's note;
+  - to **every active admin** when a graduate submits or resubmits a piece ("For review: …", linking to the review
+    screen) and when a Spotlight nomination arrives.
+  Graduates without an email on file are skipped. All user text in emails is HTML-escaped.
+
+### Changed
+- **Declined pieces can be revised and resubmitted.** The dashboard shows "Revise"; the editor shows the decline note;
+  saving a draft keeps "Not accepted" and the note until the author resubmits, which returns it to the review queue.
+- **Unpublishing a graduate's piece requires a reason.** It goes back to the author as "Changes requested" with that
+  reason (shown as "Unpublished by the editors" on their dashboard and editor, and emailed), so they can fix and
+  resubmit. Staff posts still unpublish to draft without a reason. The reason is kept in the audit log.
+
+### Verified
+- Local production build, 54 automated checks across both roles: submit → request changes → revise → resubmit →
+  withdraw → approve → live → unpublish with reason → resubmit → decline → revise → resubmit → delete; nominations;
+  Spotlight; hide; delete graduate; and each of the six notification emails triggered.
+
+---
+
 ## [0.2.3] — 2026-10-23 · Editorial workflow hardening
 
 Full code review of every graduate ↔ admin interaction (sign-in, profile, articles, review, nominations, Spotlight,

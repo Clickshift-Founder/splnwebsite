@@ -126,7 +126,7 @@ export default async function MemberDashboard({ searchParams }: { searchParams: 
                     <p className="text-sm text-slate">Updated {formatDate(p.updatedAt)}</p>
                     {p.reviewNote && ["changes_requested", "rejected"].includes(p.status) && (
                       <p className="mt-3 rounded-[8px] bg-sand p-3 text-sm">
-                        <strong>Editor&apos;s note:</strong> {p.reviewNote}
+                        <strong>{p.status === "changes_requested" && p.publishedAt ? "Unpublished by the editors:" : "Editor's note:"}</strong> {p.reviewNote}
                       </p>
                     )}
                   </div>
@@ -135,11 +135,11 @@ export default async function MemberDashboard({ searchParams }: { searchParams: 
                       <Link href={`/insights/${p.slug}`} className="text-sm font-bold text-green-deep hover:underline">
                         View
                       </Link>
-                    ) : p.status !== "rejected" ? (
+                    ) : (
                       <Link href={`/member/write/${p.id}`} className="text-sm font-bold text-green-deep hover:underline">
-                        Edit
+                        {p.status === "rejected" ? "Revise" : "Edit"}
                       </Link>
-                    ) : null}
+                    )}
                     {p.status === "pending" && (
                       <form action={withdrawPost}>
                         <input type="hidden" name="id" value={p.id} />

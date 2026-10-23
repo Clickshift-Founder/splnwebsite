@@ -3,7 +3,7 @@
 import { Field, FormMessage, Input, Select, SubmitButton, Textarea, useFormAction, type ActionResult } from "@/components/ui/form";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { MarkdownEditor } from "@/components/site/post-editor";
-import { reviewPost, saveAdminPost } from "../../actions";
+import { reviewPost, saveAdminPost, unpublishPost } from "../../actions";
 
 type P = Partial<{
   id: number;
@@ -82,7 +82,7 @@ export function ReviewForm({ id, note }: { id: number; note?: string | null }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <input type="hidden" name="id" value={id} />
-      <Field label="Note to the author" name="reviewNote" error={fe.reviewNote} hint="Required when requesting changes or declining. Be specific: which claim needs a source, which section is partisan…">
+      <Field label="Note to the author" name="reviewNote" error={fe.reviewNote} hint="Required when requesting changes or declining. Be specific: which claim needs a source, which section is partisan… The author is emailed your decision and this note, and can revise and resubmit.">
         <Textarea name="reviewNote" rows={4} defaultValue={note ?? ""} />
       </Field>
       <FormMessage state={state} />
@@ -98,5 +98,32 @@ export function ReviewForm({ id, note }: { id: number; note?: string | null }) {
         </SubmitButton>
       </div>
     </form>
+  );
+}
+
+/** Unpublish control. For a graduate's piece the editor must say why; the author is emailed the reason. */
+export function UnpublishForm({ id, needsReason }: { id: number; needsReason: boolean }) {
+  const { state, onSubmit, pending } = useFormAction<ActionResult>(unpublishPost, null);
+  const fe = state && !state.ok ? state.fieldErrors ?? {} : {};
+  return (
+    <details className="relative">
+      <summary className="flex h-9 cursor-pointer list-none items-center rounded-[4px] border border-line bg-white px-3 text-sm font-bold hover:border-ink">
+        Unpublish
+      </summary>
+      <form onSubmit={onSubmit} className="absolute right-0 z-20 mt-2 w-[min(22rem,85vw)] space-y-3 rounded-[12px] border border-line bg-white p-4 shadow-lg">
+        <input type="hidden" name="id" value={id} />
+        {needsReason ? (
+          <Field label="Why is it being unpublished?" name="reason" required error={fe.reason} hint="The author sees this on their dashboard and by email, and can revise and resubmit.">
+            <Textarea name="reason" rows={4} required minLength={10} maxLength={3000} />
+          </Field>
+        ) : (
+          <p className="text-sm text-slate">Take this post off the site? It goes back to draft.</p>
+        )}
+        <FormMessage state={state} />
+        <SubmitButton pending={pending} className="w-full">
+          Unpublish
+        </SubmitButton>
+      </form>
+    </details>
   );
 }

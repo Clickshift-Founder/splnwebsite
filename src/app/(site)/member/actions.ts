@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { graduates, posts } from "@/db/schema";
 import { requireMember } from "@/lib/auth";
 import { audit } from "@/lib/audit";
+import { notifyNewSubmission } from "@/lib/notify";
 import { slugify } from "@/lib/text";
 import { DECLARATIONS } from "@/content/site";
 import { fieldErrors, formToObject, memberPostSchema, profileSchema } from "@/lib/validation";
@@ -55,7 +56,7 @@ export async function savePost(_prev: ActionResult, form: FormData): Promise<Act
     coverUrl: cover.success ? cover.data ?? null : null,
     sources: String(data.sources ?? "").trim().slice(0, 5000) || null,
     declarations: declared,
-    status: intent === "submit" ? ("pending" as "pending" | "draft" | "changes_requested") : ("draft" as const),
+    status: intent === "submit" ? ("pending" as "pending" | "draft" | "changes_requested" | "rejected") : ("draft" as const),
     updatedAt: new Date(),
   };
 
@@ -64,10 +65,10 @@ export async function savePost(_prev: ActionResult, form: FormData): Promise<Act
     const [own] = await db
       .select({ id: posts.id, status: posts.status })
       .from(posts)
-      .where(and(eq(posts.id, id), eq(posts.authorGraduateId, me.id), inArray(posts.status, ["draft", "pending", "changes_requested"])));
+      .where(and(eq(posts.id, id), eq(posts.authorGraduateId, me.id), inArray(posts.status, ["draft", "pending", "changes_requested", "rejected"])));
     if (!own) return { ok: false, error: "You can't edit this piece (it may already be published)." };
-    // Saving revisions keeps "Changes requested" (and the editor's note) visible until the author resubmits.
-    if (intent === "draft" && own.status === "changes_requested") values.status = "changes_requested";
+    // Saving revisions keeps "Changes requested" / "Not accepted" (and the editor's note) visible until the author resubmits.
+    if (intent === "draft" && (own.status === "changes_requested" || own.status === "rejected")) values.status = own.status;
     wasPending = intent === "draft" && own.status === "pending";
     await db.update(posts).set(values).where(eq(posts.id, id));
   } else {
@@ -77,13 +78,17 @@ export async function savePost(_prev: ActionResult, form: FormData): Promise<Act
       .values({ ...values, slug, authorGraduateId: me.id })
       .returning({ id: posts.id });
     await audit(`graduate:${me.id}`, `post.${intent}`, `post:${row.id}`);
+    if (intent === "submit") notifyNewSubmission(row.id);
     revalidatePath("/member");
     redirect(intent === "submit" ? "/member?submitted=1" : `/member/write/${row.id}?saved=1`);
   }
 
   await audit(`graduate:${me.id}`, `post.${intent}`, `post:${id}`);
   revalidatePath("/member");
-  if (intent === "submit") redirect("/member?submitted=1");
+  if (intent === "submit") {
+    notifyNewSubmission(id);
+    redirect("/member?submitted=1");
+  }
   return {
     ok: true,
     message: wasPending ? "Saved as a draft — it's no longer in the review queue. Press Submit for review when it's ready." : "Draft saved.",

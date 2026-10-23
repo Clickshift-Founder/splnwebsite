@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { nominations } from "@/db/schema";
 import { getMember } from "@/lib/auth";
+import { notifyNewNomination } from "@/lib/notify";
 import { fieldErrors, formToObject } from "@/lib/validation";
 import type { ActionResult } from "@/components/ui/form";
 
@@ -31,5 +32,6 @@ export async function submitNomination(_prev: ActionResult, form: FormData): Pro
     evidenceUrl: parsed.data.evidenceUrl || null,
     reason: member ? `[Submitted by verified graduate #${member.id}]\n${parsed.data.reason}` : parsed.data.reason,
   });
+  notifyNewNomination(parsed.data.nomineeName, parsed.data.nominatorName);
   return { ok: true, message: "Thank you — the SPLN team will review your nomination and reach out to the graduate for consent." };
 }
