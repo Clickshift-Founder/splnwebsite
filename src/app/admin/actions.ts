@@ -313,8 +313,10 @@ export async function reviewPost(_prev: ActionResult, form: FormData): Promise<A
   if (!["published", "changes_requested", "rejected"].includes(decision)) return fail("Unknown decision.");
   if (decision !== "published" && !note) return fail("Add a note so the author knows what to change.", { reviewNote: "Required when requesting changes or declining." });
 
-  const [p] = await db.select({ slug: posts.slug, publishedAt: posts.publishedAt }).from(posts).where(eq(posts.id, id));
+  const [p] = await db.select({ slug: posts.slug, publishedAt: posts.publishedAt, status: posts.status }).from(posts).where(eq(posts.id, id));
   if (!p) return fail("Post not found.");
+  // The author may have withdrawn it while it was open here.
+  if (p.status === "draft") return fail("The author has withdrawn this piece to keep working on it. It will return to the queue when they resubmit.");
   await db
     .update(posts)
     .set({
@@ -359,6 +361,14 @@ export async function setNominationStatus(form: FormData) {
   const status = String(form.get("status"));
   if (!["new", "reviewed", "featured", "declined"].includes(status)) return;
   await db.update(nominations).set({ status }).where(eq(nominations.id, id));
+  revalidatePath("/admin/nominations");
+}
+
+export async function deleteNomination(form: FormData) {
+  const a = await requireAdmin();
+  const id = Number(form.get("id"));
+  await db.delete(nominations).where(eq(nominations.id, id));
+  await audit(`admin:${a.id}`, "nomination.delete", `nomination:${id}`);
   revalidatePath("/admin/nominations");
 }
 

@@ -44,25 +44,31 @@ export async function savePost(_prev: ActionResult, form: FormData): Promise<Act
   if (intent === "submit" && declared.length !== DECLARATIONS.length)
     return { ok: false, error: "Please confirm every editorial declaration before submitting.", fieldErrors: { declarations: "All declarations are required." } };
 
+  // A half-finished draft still keeps a valid cover image.
+  const cover = memberPostSchema.shape.coverUrl.safeParse(data.coverUrl);
   const values = {
     title: String(data.title ?? "").trim().slice(0, 160),
     type: (data.type === "thought_leadership" ? "thought_leadership" : "article") as "article" | "thought_leadership",
     topic: String(data.topic ?? "").trim().slice(0, 60) || null,
     excerpt: String(data.excerpt ?? "").trim().slice(0, 320) || null,
     body: String(data.body ?? "").trim().slice(0, 40000),
-    coverUrl: parsed.success ? parsed.data.coverUrl ?? null : null,
+    coverUrl: cover.success ? cover.data ?? null : null,
     sources: String(data.sources ?? "").trim().slice(0, 5000) || null,
     declarations: declared,
-    status: intent === "submit" ? ("pending" as const) : ("draft" as const),
+    status: intent === "submit" ? ("pending" as "pending" | "draft" | "changes_requested") : ("draft" as const),
     updatedAt: new Date(),
   };
 
+  let wasPending = false;
   if (id) {
     const [own] = await db
-      .select({ id: posts.id })
+      .select({ id: posts.id, status: posts.status })
       .from(posts)
       .where(and(eq(posts.id, id), eq(posts.authorGraduateId, me.id), inArray(posts.status, ["draft", "pending", "changes_requested"])));
     if (!own) return { ok: false, error: "You can't edit this piece (it may already be published)." };
+    // Saving revisions keeps "Changes requested" (and the editor's note) visible until the author resubmits.
+    if (intent === "draft" && own.status === "changes_requested") values.status = "changes_requested";
+    wasPending = intent === "draft" && own.status === "pending";
     await db.update(posts).set(values).where(eq(posts.id, id));
   } else {
     const slug = `${slugify(values.title) || "article"}-${Math.random().toString(36).slice(2, 7)}`;
@@ -78,7 +84,10 @@ export async function savePost(_prev: ActionResult, form: FormData): Promise<Act
   await audit(`graduate:${me.id}`, `post.${intent}`, `post:${id}`);
   revalidatePath("/member");
   if (intent === "submit") redirect("/member?submitted=1");
-  return { ok: true, message: "Draft saved." };
+  return {
+    ok: true,
+    message: wasPending ? "Saved as a draft — it's no longer in the review queue. Press Submit for review when it's ready." : "Draft saved.",
+  };
 }
 
 export async function withdrawPost(form: FormData) {

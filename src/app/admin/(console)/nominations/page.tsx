@@ -6,7 +6,8 @@ import { AdminHeader } from "@/components/admin/ui";
 import { Badge, ButtonLink, EmptyState } from "@/components/ui/primitives";
 import { requireAdmin } from "@/lib/auth";
 import { formatDate } from "@/lib/text";
-import { setNominationStatus } from "../../actions";
+import { ConfirmButton } from "@/components/ui/confirm-button";
+import { deleteNomination, setNominationStatus } from "../../actions";
 
 const ACCENT = { new: "amber", reviewed: "blue", featured: "green", declined: "red" } as const;
 
@@ -52,6 +53,12 @@ export default async function NominationsPage() {
                       <button className="rounded-full border border-line px-3 py-1 text-sm font-bold hover:border-ink">Mark {s}</button>
                     </form>
                   ))}
+                <form action={deleteNomination}>
+                  <input type="hidden" name="id" value={n.id} />
+                  <ConfirmButton message="Delete this nomination permanently?" className="rounded-full px-3 py-1 text-sm font-bold text-red hover:bg-red-tint">
+                    Delete
+                  </ConfirmButton>
+                </form>
                 <ButtonLink href="/admin/spotlights/new" size="sm" className="ml-auto">
                   Write the story
                 </ButtonLink>

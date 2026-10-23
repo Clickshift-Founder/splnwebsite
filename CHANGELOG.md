@@ -5,6 +5,26 @@ Sections: **Added · Changed · Fixed · Security · Data · Notes**. Dates are 
 
 ---
 
+## [0.2.3] — 2026-10-23 · Editorial workflow hardening
+
+Full code review of every graduate ↔ admin interaction (sign-in, profile, articles, review, nominations, Spotlight,
+hide, delete), plus an end-to-end run of each flow on a local copy.
+
+### Fixed
+- **Editor's note disappeared** if a graduate pressed *Save draft* while revising a piece sent back with "Changes
+  requested": the piece became a plain draft and the note vanished from their dashboard and editor. Saving revisions
+  now keeps the "Changes requested" status and the note until they resubmit.
+- Saving a *pending* piece as a draft quietly took it out of the review queue. The author is now told so
+  ("…no longer in the review queue. Press Submit for review when it's ready.").
+- An editor could approve a piece the author had withdrawn while the review screen was open. The decision is now
+  refused with an explanation, and the piece stays private.
+- A half-finished draft lost its cover image when other fields were incomplete.
+
+### Added
+- **Delete a nomination** in Admin → Nominations (e.g. spam or test entries). Logged as `nomination.delete`.
+
+---
+
 ## [0.2.2] — 2026-10-23 · Photo uploads fixed, delete a graduate
 
 ### Fixed
