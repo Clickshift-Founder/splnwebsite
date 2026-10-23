@@ -5,6 +5,29 @@ Sections: **Added · Changed · Fixed · Security · Data · Notes**. Dates are 
 
 ---
 
+## [0.2.2] — 2026-10-23 · Photo uploads fixed, delete a graduate
+
+### Fixed
+- **Photo uploads failed in production** with "Uploads are not configured (BLOB_READ_WRITE_TOKEN)". New Vercel Blob
+  stores connect to the project through Vercel's OIDC sign-in and no longer create `BLOB_READ_WRITE_TOKEN`; the site
+  refused to upload without it. Uploads now go to Blob whenever the site runs on Vercel, authenticating with OIDC +
+  `BLOB_STORE_ID` (falling back to the `spln-uploads` store id) or the classic token if one is set.
+
+### Changed
+- Upload failures that aren't the person's fault now show "Photo upload isn't working right now…" with the Secretariat
+  email, instead of a technical message; the detail goes to the server log.
+
+### Added
+- **Delete a graduate** (super admins only): Admin → Graduates → open a graduate → Delete. For test accounts, duplicates
+  and people added in error. The confirmation names what else goes (their Spotlight stories and articles). Hiding
+  remains the reversible option. Logged in the audit trail as `graduate.delete`.
+
+### Verified
+- Local production build: delete a test graduate with 1 story + 1 article → confirmation lists both → register count
+  drops by one, story and article gone, public profile 404, audit entry written.
+
+---
+
 ## [0.2.1] — 2026-10-22 · Mentor gate, mobile search, new contact email
 
 ### Changed

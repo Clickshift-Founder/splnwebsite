@@ -14,7 +14,7 @@ import { setGraduateHidden } from "../../actions";
 import { ImportForm } from "./import-form";
 
 const PAGE = 50;
-type SP = Promise<{ q?: string; cohort?: string; view?: string; page?: string }>;
+type SP = Promise<{ q?: string; cohort?: string; view?: string; page?: string; deleted?: string }>;
 
 export default async function AdminGraduatesPage({ searchParams }: { searchParams: SP }) {
   await requireAdmin();
@@ -67,6 +67,7 @@ export default async function AdminGraduatesPage({ searchParams }: { searchParam
         sub="The verified register. Hide a graduate to remove them from the public directory without deleting them."
         actions={<ButtonLink href="/admin/graduates/new" size="sm">Add graduate</ButtonLink>}
       />
+      {sp.deleted && <p className="mb-6 rounded-[8px] bg-green-tint px-4 py-3 text-sm font-bold text-green-deep">Graduate deleted.</p>}
 
       <form className="mb-5 grid gap-3 rounded-[12px] border border-line bg-white p-4 md:grid-cols-[1fr_220px_200px_auto]">
         <Input name="q" defaultValue={sp.q} placeholder="Search name, email or matric number…" />

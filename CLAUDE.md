@@ -140,7 +140,7 @@ data/private/          graduate registry CSV — GITIGNORED, NEVER COMMIT
 
 ## 8. Environments & deployment
 
-- **Vercel → Storage → Neon (Marketplace)** creates `DATABASE_URL` automatically. **Vercel → Storage → Blob** creates `BLOB_READ_WRITE_TOKEN`.
+- **Vercel → Storage → Neon (Marketplace)** creates `DATABASE_URL` automatically. **Vercel → Storage → Blob** (Public) connects via OIDC (`BLOB_STORE_ID`; older stores set `BLOB_READ_WRITE_TOKEN`) — see `src/lib/storage.ts`.
 - Set `AUTH_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `NEXT_PUBLIC_SITE_URL` in Vercel env.
 - First deploy: locally point `DATABASE_URL` at Neon, then `db:migrate` → `db:seed` → `db:import-graduates` → `admin:create`.
 - Schema changes: generate locally, commit, then run `db:migrate` against Neon **before** the deploy that depends on it.

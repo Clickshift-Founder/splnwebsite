@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdmin, getMember } from "@/lib/auth";
-import { storeImage } from "@/lib/storage";
+import { storeImage, UploadError } from "@/lib/storage";
+import { SITE } from "@/content/site";
 
 const FOLDERS = new Set(["profiles", "spotlights", "posts", "gallery"]);
 
@@ -21,6 +22,11 @@ export async function POST(req: Request) {
     const url = await storeImage(file, folder);
     return NextResponse.json({ url });
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Upload failed." }, { status: 400 });
+    if (e instanceof UploadError) return NextResponse.json({ error: e.message }, { status: 400 });
+    console.error("[upload] storage failed", e);
+    return NextResponse.json(
+      { error: `Photo upload isn't working right now. Please try again later, or write to ${SITE.contactEmail}.` },
+      { status: 500 },
+    );
   }
 }

@@ -34,7 +34,7 @@ Without `RESEND_API_KEY`, graduate sign-in codes print in the terminal.
 
 1. Import this repo into Vercel.
 2. **Storage → Create → Neon (Postgres)** and connect it to the project. This sets `DATABASE_URL`.
-3. **Storage → Create → Blob** and connect it. This sets `BLOB_READ_WRITE_TOKEN` for photo uploads.
+3. **Storage → Create → Blob** (access: **Public**) and connect it to the project, then redeploy. New stores authenticate with Vercel OIDC, so no `BLOB_READ_WRITE_TOKEN` appears — that is expected.
 4. **Settings → Environment Variables** (tick Production, Preview and Development for each):
 
    | Variable | What it is | How to get it |

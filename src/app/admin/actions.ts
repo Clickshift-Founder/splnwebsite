@@ -111,6 +111,25 @@ export async function setGraduateHidden(form: FormData) {
   revalidatePath("/admin/graduates");
 }
 
+/**
+ * Permanently removes a graduate (super admin only) — for test accounts, duplicates and people added in error.
+ * Their sign-in codes and Spotlight stories go with them (FK cascade); their articles are deleted too so no
+ * byline-less writing is left behind. Hiding is the reversible option for everyone else.
+ */
+export async function deleteGraduate(form: FormData) {
+  const a = await requireAdmin("super_admin");
+  const id = Number(form.get("id"));
+  const [g] = await db.select({ slug: graduates.slug, photoUrl: graduates.photoUrl }).from(graduates).where(eq(graduates.id, id));
+  if (!g) redirect("/admin/graduates");
+  await db.delete(posts).where(eq(posts.authorGraduateId, id));
+  await db.delete(graduates).where(eq(graduates.id, id));
+  if (g.photoUrl) await deleteStored(g.photoUrl);
+  await audit(`admin:${a.id}`, "graduate.delete", `graduate:${id}`);
+  revalidatePublic();
+  revalidatePath(`/graduates/${g.slug}`);
+  redirect("/admin/graduates?deleted=1");
+}
+
 const registrySchema = z.object({
   fullName: z.string().trim().min(2).max(120),
   cohortId: z.coerce.number().int().positive("Choose a class."),
